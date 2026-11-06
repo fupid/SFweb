@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Files - Cloud Storage</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1200px; /* Increased max-width for categories */
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex; /* Use flexbox for main layout */
+        }
+        .sidebar {
+            width: 240px;
+            padding: 24px;
+            border-right: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 24px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.15s ease-in-out;
+            cursor: pointer;
+        }
+        .file-item:hover {
+            background-color: #f5f5f5;
+        }
+        .download-button {
+            background-color: #1a73e8; /* Google Blue */
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            text-decoration: none; /* Remove underline from anchor button */
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        .download-button:hover {
+            background-color: #155bb5;
+        }
+        .category-link {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            color: #4b5563;
+            font-weight: 500;
+            transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+            cursor: pointer;
+        }
+        .category-link:hover {
+            background-color: #e5e7eb;
+            color: #1a73e8;
+        }
+        .category-link.active {
+            background-color: #e0f2fe; /* Light blue for active state */
+            color: #1a73e8;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar for Categories -->
+        <aside class="sidebar">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">Categories</h2>
+            <nav>
+                <h3 class="text-sm font-semibold uppercase text-gray-500 mb-2">Cloud</h3>
+                <ul>
+                    <li><a href="#" class="category-link active" data-category="all">All Files</a></li>
+                    <li><a href="#" class="category-link" data-category="HCI">HCI</a></li>
+                    <li><a href="#" class="category-link" data-category="VDI">VDI</a></li>
+                    <li><a href="#" class="category-link" data-category="aStor">aStor</a></li>
+                    <li><a href="#" class="category-link" data-category="MCS">MCS</a></li>
+                </ul>
+                <h3 class="text-sm font-semibold uppercase text-gray-500 mt-6 mb-2">Security</h3>
+                <ul>
+                    <li><a href="#" class="category-link" data-category="ES">ES</a></li>
+                    <li><a href="#" class="category-link" data-category="NSF">NSF</a></li>
+                    <li><a href="#" class="category-link" data-category="IAG">IAG</a></li>
+                    <li><a href="#" class="category-link" data-category="CCOM">CCOM</a></li>
+                    <li><a href="#" class="category-link" data-category="XDR">XDR</a></li>
+                    <li><a href="#" class="category-link" data-category="SASE/ZTNA">SASE/ZTNA</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="flex items-center justify-between pb-6 border-b border-gray-200 mb-6">
+                <h1 class="text-2xl font-semibold text-gray-800">My Drive</h1>
+                <div class="flex items-center space-x-4">
+                    <input type="text" placeholder="Search in Drive" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                    <button id="upload-file-btn" class="download-button">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Upload File
+                    </button>
+                    <button class="download-button">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        New
+                    </button>
+                </div>
+            </header>
+
+            <!-- File List -->
+            <div class="p-0">
+                <h2 class="text-lg font-medium text-gray-700 mb-4">Files</h2>
+                <div id="file-list" class="grid grid-cols-1 gap-y-2">
+                    <!-- File Item 1 -->
+                    <div class="file-item" data-category="HCI">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="text-gray-800 font-medium">HCI_Deployment_Guide.pdf</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">2.5 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 2 -->
+                    <div class="file-item" data-category="VDI">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="text-gray-800 font-medium">VDI_Best_Practices.zip</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">58.1 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 3 -->
+                    <div class="file-item" data-category="aStor">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2v10zm10-2V7m0 10a2 2 0 01-2 2h-2a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2v10z"></path></svg>
+                            <span class="text-gray-800 font-medium">aStor_Configuration_Guide.xlsx</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">1.2 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 4 -->
+                    <div class="file-item" data-category="MCS">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            <span class="text-gray-800 font-medium">MCS_Integration_Docs.zip</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">15.7 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 5 (Security - ES) -->
+                    <div class="file-item" data-category="ES">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c.041 1.07.243 2.115.587 3.102M12 20.056a11.955 11.955 0 01-8.618-3.04A12.007 12.007 0 002.944 12c.041-1.07.243-2.115.587-3.102M12 20.056a11.955 11.955 0 008.618-3.04A12.007 12.007 0 0121.056 12c-.041-1.07-.243-2.115-.587-3.102M12 20.056a11.955 11.955 0 00-8.618-3.04A12.007 12.007 0 012.944 12c.041-1.07.243-2.115.587-3.102"></path></svg>
+                            <span class="text-gray-800 font-medium">ES_Security_Policy.pdf</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">3.1 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 6 (Security - NSF) -->
+                    <div class="file-item" data-category="NSF">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span class="text-gray-800 font-medium">NSF_Firewall_Rules.txt</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">0.8 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 7 (Security - IAG) -->
+                    <div class="file-item" data-category="IAG">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2zM9 12a4 4 0 11-8 0 4 4 0 018 0zM21 12a4 4 0 11-8 0 4 4 0 018 0zM12 21a4 4 0 11-8 0 4 4 0 018 0zM12 3a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <span class="text-gray-800 font-medium">IAG_Access_Control.docx</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">1.5 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 8 (Security - CCOM) -->
+                    <div class="file-item" data-category="CCOM">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                            <span class="text-gray-800 font-medium">CCOM_Compliance_Report.pdf</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">4.0 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 9 (Security - XDR) -->
+                    <div class="file-item" data-category="XDR">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 1.657-1.594 3-3.5 3S5 12.657 5 11s1.594-3 3.5-3 3.5 1.343 3.5 3zM19 11c0 1.657-1.594 3-3.5 3S12 12.657 12 11s1.594-3 3.5-3 3.5 1.343 3.5 3zM12 21c0 1.657-1.594 3-3.5 3S5 22.657 5 21s1.594-3 3.5-3 3.5 1.343 3.5 3zM19 21c0 1.657-1.594 3-3.5 3S12 22.657 12 21s1.594-3 3.5-3 3.5 1.343 3.5 3zM12 3c0 1.657-1.594 3-3.5 3S5 4.657 5 3s1.594-3 3.5-3 3.5 1.343 3.5 3zM19 3c0 1.657-1.594 3-3.5 3S12 4.657 12 3s1.594-3 3.5-3 3.5 1.343 3.5 3z"></path></svg>
+                            <span class="text-gray-800 font-medium">XDR_Threat_Intelligence.json</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">0.7 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                    <!-- File Item 10 (Security - SASE/ZTNA) -->
+                    <div class="file-item" data-category="SASE/ZTNA">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            <span class="text-gray-800 font-medium">SASE_ZTNA_Whitepaper.pdf</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">6.8 MB</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-xl font-semibold mb-4">Upload New File</h2>
+            <div id="password-section">
+                <p class="mb-4">Enter password to upload files to <span id="current-category-name" class="font-bold">All Files</span>:</p>
+                <input type="password" id="upload-password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 mb-4">
+                <button id="verify-password-btn" class="download-button w-full">Verify Password</button>
+                <p id="password-message" class="text-red-500 text-sm mt-2 hidden">Incorrect password.</p>
+            </div>
+            <div id="upload-section" class="hidden">
+                <input type="file" id="file-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                <input type="text" id="file-size" placeholder="File Size (e.g., 1.5 MB)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 mb-4">
+                <button id="confirm-upload-btn" class="download-button w-full">Upload</button>
+                <p id="upload-message" class="text-green-500 text-sm mt-2 hidden">File uploaded successfully!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const categoryLinks = document.querySelectorAll('.category-link');
+            let fileItems = Array.from(document.querySelectorAll('.file-item')); // Convert to array for easier manipulation
+            const fileListContainer = document.getElementById('file-list');
+            const uploadFileBtn = document.getElementById('upload-file-btn');
+            const uploadModal = document.getElementById('upload-modal');
+            const closeButton = document.querySelector('.close-button');
+            const passwordSection = document.getElementById('password-section');
+            const uploadSection = document.getElementById('upload-section');
+            const uploadPasswordInput = document.getElementById('upload-password');
+            const verifyPasswordBtn = document.getElementById('verify-password-btn');
+            const passwordMessage = document.getElementById('password-message');
+            const fileInput = document.getElementById('file-input');
+            const fileSizeInput = document.getElementById('file-size');
+            const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+            const uploadMessage = document.getElementById('upload-message');
+            const currentCategoryName = document.getElementById('current-category-name');
+
+            const UPLOAD_PASSWORD = "Sangfor@Thailand"; // Hardcoded password for demonstration
+
+            let currentCategory = 'all'; // Default category
+
+            // Function to filter files based on category
+            const filterFiles = (category) => {
+                currentCategory = category; // Update current category
+                currentCategoryName.textContent = category === 'all' ? 'All Files' : category; // Update modal text
+
+                fileItems.forEach(item => {
+                    const itemCategory = item.dataset.category;
+                    if (category === 'all' || itemCategory === category) {
+                        item.style.display = 'flex'; // Show the file
+                    } else {
+                        item.style.display = 'none'; // Hide the file
+                    }
+                });
+            };
+
+            // Add click event listeners to category links
+            categoryLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default link behavior
+
+                    // Remove active class from all links
+                    categoryLinks.forEach(l => l.classList.remove('active'));
+
+                    // Add active class to the clicked link
+                    link.classList.add('active');
+
+                    const selectedCategory = link.dataset.category;
+                    filterFiles(selectedCategory);
+                });
+            });
+
+            // Open upload modal
+            uploadFileBtn.addEventListener('click', () => {
+                uploadModal.style.display = 'flex'; // Show modal
+                passwordSection.classList.remove('hidden'); // Show password section
+                uploadSection.classList.add('hidden'); // Hide upload section
+                passwordMessage.classList.add('hidden'); // Hide password error message
+                uploadMessage.classList.add('hidden'); // Hide upload success message
+                uploadPasswordInput.value = ''; // Clear password input
+                fileInput.value = ''; // Clear file input
+                fileSizeInput.value = ''; // Clear file size input
+            });
+
+            // Close upload modal
+            closeButton.addEventListener('click', () => {
+                uploadModal.style.display = 'none';
+            });
+
+            // Close modal if clicked outside content
+            window.addEventListener('click', (event) => {
+                if (event.target == uploadModal) {
+                    uploadModal.style.display = 'none';
+                }
+            });
+
+            // Verify password
+            verifyPasswordBtn.addEventListener('click', () => {
+                if (uploadPasswordInput.value === UPLOAD_PASSWORD) {
+                    passwordSection.classList.add('hidden'); // Hide password section
+                    uploadSection.classList.remove('hidden'); // Show upload section
+                    passwordMessage.classList.add('hidden'); // Hide error message
+                } else {
+                    passwordMessage.classList.remove('hidden'); // Show error message
+                }
+            });
+
+            // Simulate file upload
+            confirmUploadBtn.addEventListener('click', () => {
+                const file = fileInput.files[0];
+                const fileName = file ? file.name : 'New_Uploaded_File.txt'; // Default name if no file selected
+                const fileSize = fileSizeInput.value || 'Unknown Size'; // Use input size or default
+
+                if (file || fileSizeInput.value) {
+                    // Create a new file item element
+                    const newFileItem = document.createElement('div');
+                    newFileItem.classList.add('file-item');
+                    newFileItem.dataset.category = currentCategory; // Assign current category
+
+                    // Determine icon based on file extension (simple logic)
+                    let iconSvg = `<svg class="w-6 h-6 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0015.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`; // Default file icon
+                    if (fileName.endsWith('.pdf')) {
+                        iconSvg = `<svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+                    } else if (fileName.endsWith('.zip')) {
+                        iconSvg = `<svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
+                    } else if (fileName.endsWith('.xlsx')) {
+                        iconSvg = `<svg class="w-6 h-6 mr-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2v10zm10-2V7m0 10a2 2 0 01-2 2h-2a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2v10z"></path></svg>`;
+                    } else if (fileName.endsWith('.txt') || fileName.endsWith('.json')) {
+                        iconSvg = `<svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>`;
+                    }
+
+
+                    newFileItem.innerHTML = `
+                        <div class="flex items-center">
+                            ${iconSvg}
+                            <span class="text-gray-800 font-medium">${fileName}</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-500 text-sm">${fileSize}</span>
+                            <a href="#" class="download-button">Download</a>
+                        </div>
+                    `;
+                    fileListContainer.appendChild(newFileItem);
+                    fileItems.push(newFileItem); // Add to the live list
+
+                    uploadMessage.classList.remove('hidden'); // Show success message
+                    setTimeout(() => {
+                        uploadModal.style.display = 'none'; // Close modal after a short delay
+                        uploadMessage.classList.add('hidden'); // Hide success message
+                        filterFiles(currentCategory); // Re-filter to ensure new file is visible if category matches
+                    }, 1500);
+                } else {
+                    uploadMessage.textContent = "Please select a file or enter a size.";
+                    uploadMessage.classList.remove('hidden');
+                    uploadMessage.classList.remove('text-green-500');
+                    uploadMessage.classList.add('text-red-500');
+                }
+            });
+
+            // Initial filter to show all files (or default category)
+            filterFiles('all');
+        });
+    </script>
+</body>
+</html>

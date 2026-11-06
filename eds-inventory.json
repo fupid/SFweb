@@ -1,0 +1,80 @@
+{
+  "models": {
+    "aStor-EDS1150-W": {
+      "cpu": "1x Intel Xeon 4310 2.1G 12C24T",
+      "ram": "64GB",
+      "pci": "2*1GE + 2*10GE",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 11,
+      "defaultDimms": 2,
+      "supportedDimms": [2, 4, 6, 8, 12, 16]
+    },
+    "aStor-EDS1210-W": {
+      "cpu": "1x Intel Xeon 4310 2.1G 12C24T",
+      "ram": "64GB",
+      "pci": "2*1GE + 4*10GE",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 12,
+      "defaultDimms": 2,
+      "supportedDimms": [2, 4, 6, 8, 12, 16]
+    },
+    "aStor-EDS3650-W": {
+      "cpu": "2x Intel Xeon 4310 2.1G 12C24T",
+      "ram": "128GB",
+      "pci": "2*1GE + 2*10GE",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 36,
+      "defaultDimms": 4,
+      "supportedDimms": [2, 4, 8, 12, 16, 24, 32]
+    },
+    "aStor-EDS-F6000T": {
+      "cpu": "2x Intel Xeon Gold 5512U 2.1 GHz",
+      "ram": "256GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 24,
+      "defaultDimms": 8,
+      "supportedDimms": [8, 12, 16]
+    },
+    "aStor-EDS-F6000Q": {
+      "cpu": "2x Intel Xeon Gold 5512U 2.1 GHz",
+      "ram": "256GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 24,
+      "defaultDimms": 8,
+      "supportedDimms": [8, 12, 16]
+    },
+    "aStor-EDS-F3000T": {
+      "cpu": "2x Intel Xeon Silver 4510 2.4 GHz",
+      "ram": "128GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 24,
+      "defaultDimms": 4,
+      "supportedDimms": [4, 8, 12, 16]
+    },
+    "aStor-EDS-F3000Q": {
+      "cpu": "2x Intel Xeon Silver 4510 2.4 GHz",
+      "ram": "128GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3,
+      "maxNodes": 64,
+      "diskSlots": 24,
+      "defaultDimms": 4,
+      "supportedDimms": [4, 8, 12, 16]
+    }
+  },
+  "hardware": {
+    "hdd_sizes": [4, 8, 10, 12, 16],
+    "cache_sizes": [0.96, 1.92, 3.84, 7.68],
+    "nvme_all_flash_sizes": [3.84, 7.68, 15.36, 30.72],
+    "dimm_size_gb": 32
+  }
+}

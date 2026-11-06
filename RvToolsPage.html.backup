@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RVTools File Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --primary-green: #34a853;
+            --primary-red: #ea4335;
+            --primary-yellow: #fbbc05;
+            --primary-gray: #3c4043;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .sidebar.collapsed {
+            transform: translateX(-260px);
+        }
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+        .content.expanded {
+            margin-left: 0;
+        }
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
+        }
+        .sidebar-header h2 {
+            color: white;
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .nav-menu {
+            padding: 10px 0;
+        }
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        .nav-item:hover {
+            background-color: #f3f4f6;
+            color: #1a73e8;
+        }
+        .nav-item.active {
+            background-color: #e0f2fe;
+            color: #1a73e8;
+            border-left: 3px solid #1a73e8;
+        }
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+        .hamburger-menu {
+            display: none;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 101;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .header-section {
+            background-color: #ffffff;
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .breadcrumb a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .header-section h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+            background-color: #f9fafb;
+        }
+        .upload-area {
+            border: 2px dashed #93c5fd;
+            border-radius: 12px;
+            padding: 60px 40px;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-2px);
+        }
+        .upload-area.dragover {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .upload-icon {
+            font-size: 4em;
+            color: #3b82f6;
+            margin-bottom: 20px;
+        }
+        .upload-text {
+            font-size: 1.3em;
+            color: #1f2937;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .upload-subtext {
+            color: #6b7280;
+            font-size: 1em;
+        }
+        .file-input {
+            display: none;
+        }
+        .dashboard {
+            display: none;
+            padding: 40px;
+        }
+        .dashboard.active {
+            display: block;
+        }
+        .dashboard-section {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        .section-header:hover {
+            background-color: #f9fafb;
+            border-radius: 8px 8px 0 0;
+        }
+        .section-header h3 {
+            color: #1f2937;
+            font-size: 1.3em;
+            margin: 0;
+            font-weight: 600;
+        }
+        .section-toggle {
+            transition: transform 0.3s ease;
+        }
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        .section-content {
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+        }
+        .section-content.collapsed {
+            max-height: 0 !important;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background-color: #e0f2fe;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid #1a73e8;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card .help-tooltip {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #1a73e8;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: help;
+            font-weight: 600;
+        }
+        .card .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            width: 200px;
+            background: #1f2937;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        .card .help-tooltip:hover + .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+            margin-bottom: 5px;
+        }
+        .card h3 {
+            color: #1a73e8;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        .card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 5px;
+        }
+        .card .label {
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .chart-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .chart-title {
+            color: #1f2937;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+            font-size: 14px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #ffffff;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #4b5563;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        th:hover {
+            background-color: #e5e7eb;
+        }
+        th.sort-asc::after {
+            content: ' ↑';
+            color: #1a73e8;
+        }
+        th.sort-desc::after {
+            content: ' ↓';
+            color: #1a73e8;
+        }
+        tr:hover td {
+            background-color: #f9fafb;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        .loading-spinner {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #ef4444;
+        }
+        .action-button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-button:hover {
+            background-color: #155bb5;
+            transform: translateY(-1px);
+        }
+        .action-button.secondary {
+            background-color: #4285f4;
+        }
+        .action-button.secondary:hover {
+            background-color: #3367d6;
+        }
+        .action-button.success {
+            background-color: #34a853;
+        }
+        .action-button.success:hover {
+            background-color: #2e8b4e;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .export-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 220px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 1;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .export-dropdown-content.show {
+            display: block;
+        }
+        .export-dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+            color: #4b5563;
+        }
+        .export-dropdown-item:hover {
+            background-color: #f3f4f6;
+            color: #1a73e8;
+        }
+        .export-dropdown-item svg {
+            width: 18px;
+            height: 18px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1f2937;
+        }
+        .modal-body {
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-260px);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .content {
+                margin-left: 0;
+            }
+            .hamburger-menu {
+                display: block;
+            }
+            .header-section h1 {
+                font-size: 1.2em;
+            }
+            .upload-area {
+                padding: 40px 20px;
+            }
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            .action-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger-menu" id="hamburgerMenu" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+    </button>
+
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>🖥️ RVTools Analyzer</h2>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" onclick="scrollToSection('import')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                    Import File
+                </div>
+                <div class="nav-item" onclick="scrollToSection('summary')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                    </svg>
+                    Data Summary
+                </div>
+                <div class="nav-item" onclick="scrollToSection('charts')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>
+                    </svg>
+                    Charts/Visualizations
+                </div>
+                <div class="nav-item" onclick="scrollToSection('details')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Infrastructure Details
+                </div>
+                <div class="nav-item" onclick="scrollToSection('export')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Export Options
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="content" id="content">
+            <div class="container">
+                <div class="header-section">
+                    <div style="margin-left: 50px;">
+                        <div class="breadcrumb">
+                            <a href="Index.html">Home</a>
+                            <span>›</span>
+                            <span>RVTools File Analyzer</span>
+                        </div>
+                        <h1>🖥️ RVTools File Analyzer</h1>
+                    </div>
+                    <button class="action-button" onclick="window.history.back()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+                        </svg>
+                        Back
+                    </button>
+                </div>
+
+                <!-- Import Section -->
+                <div class="upload-section" id="importSection">
+                    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click to upload RVTools file</div>
+                        <div class="upload-subtext">or drag and drop your Excel file here</div>
+                        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" />
+                    </div>
+
+                    <div class="progress-bar" id="progressBar" style="display: none;">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+
+                    <div class="loading" id="loadingState" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p id="loadingText">Processing RVTools file...</p>
+                    </div>
+
+                    <div class="error-message" id="errorMessage" style="display: none;"></div>
+                </div>
+
+                <!-- Dashboard -->
+                <div class="dashboard" id="dashboard">
+                    <!-- Action Buttons -->
+                    <div class="button-group">
+                        <button class="action-button secondary" onclick="resetUpload()">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004 16.087v-1.262a8.001 8.001 0 0112.001-6.913L18 9l3-3m0 0l-3-3"/>
+                            </svg>
+                            Upload Another File
+                        </button>
+                        
+                        <!-- Export Dropdown -->
+                        <div class="export-dropdown">
+                            <button class="action-button success" onclick="toggleExportDropdown()">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Download Report
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div class="export-dropdown-content" id="exportDropdown">
+                                <div class="export-dropdown-item" onclick="exportToExcel()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <path d="M9 15l2 2 4-4"/>
+                                    </svg>
+                                    Download Excel Report
+                                </div>
+                                <div class="export-dropdown-item" onclick="exportChartsAsImage()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                    Export Charts as PNG
+                                </div>
+                                <div class="export-dropdown-item" onclick="exportToPDF()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                        <line x1="10" y1="9" x2="8" y2="9"/>
+                                    </svg>
+                                    Export Full PDF Report
+                                </div>
+                                <div class="export-dropdown-item" onclick="exportSummaryGraphic()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                        <line x1="8" y1="21" x2="16" y2="21"/>
+                                        <line x1="12" y1="17" x2="12" y2="21"/>
+                                    </svg>
+                                    Export Summary Dashboard
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Debug Section -->
+                    <div class="dashboard-section" id="debugSection" style="display: none;">
+                        <div class="section-header" onclick="toggleSection('debugContent', 'debugToggle')">
+                            <h3>🔍 Debug Information</h3>
+                            <svg class="section-toggle" id="debugToggle" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <div class="section-content" id="debugContent">
+                            <div id="debugInfo"></div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards Section -->
+                    <div class="dashboard-section" id="summarySection">
+                        <div class="section-header" onclick="toggleSection('summaryContent', 'summaryToggle')">
+                            <h3>📊 Data Summary</h3>
+                            <svg class="section-toggle" id="summaryToggle" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <div class="section-content" id="summaryContent">
+                            <div class="summary-cards" id="summaryCards">
+                                <!-- Cards will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="dashboard-section" id="chartsSection">
+                        <div class="section-header" onclick="toggleSection('chartsContent', 'chartsToggle')">
+                            <h3>📈 Charts & Visualizations</h3>
+                            <svg class="section-toggle" id="chartsToggle" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <div class="section-content" id="chartsContent">
+                            <div class="charts-grid" id="chartsGrid">
+                                <div class="chart-container">
+                                    <div class="chart-title">Infrastructure Overview</div>
+                                    <canvas id="overviewChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <div class="chart-title">VM Distribution by OS</div>
+                                    <canvas id="osChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <div class="chart-title">Resource Utilization</div>
+                                    <canvas id="resourceChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <div class="chart-title">ESX Host Distribution</div>
+                                    <canvas id="esxChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details Section -->
+                    <div class="dashboard-section" id="detailsSection">
+                        <div class="section-header" onclick="toggleSection('detailsTableContent', 'detailsToggle')">
+                            <h3>📋 Infrastructure Details</h3>
+                            <svg class="section-toggle" id="detailsToggle" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <div class="section-content" id="detailsTableContent">
+                            <div class="filter-row">
+                                <input type="text" id="tableFilter" class="filter-input" placeholder="Search component..." />
+                                <select id="tableSort" class="filter-input">
+                                    <option value="">Sort by...</option>
+                                    <option value="total">Total</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="percentage">Percentage</option>
+                                </select>
+                            </div>
+                            <div class="table-container">
+                                <table id="detailsTable">
+                                    <thead>
+                                        <tr>
+                                            <th onclick="sortTable(0)">Component</th>
+                                            <th onclick="sortTable(1)">Total</th>
+                                            <th onclick="sortTable(2)">Active</th>
+                                            <th onclick="sortTable(3)">Inactive</th>
+                                            <th onclick="sortTable(4)">Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailsTableBody">
+                                        <!-- Table rows will be populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for messages -->
+    <div class="modal" id="messageModal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">Notification</div>
+            <div class="modal-body" id="modalBody">Message goes here</div>
+            <div class="modal-footer">
+                <button class="action-button" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedData = null;
+        let charts = {};
+        let tableData = [];
+        let sortDirection = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                const dropdown = document.getElementById('exportDropdown');
+                const dropdownButton = e.target.closest('.export-dropdown');
+                if (!dropdownButton && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Table filter
+            document.getElementById('tableFilter').addEventListener('input', filterTable);
+
+            // Table sort dropdown
+            document.getElementById('tableSort').addEventListener('change', function(e) {
+                const sortBy = e.target.value;
+                if (sortBy) {
+                    const columnIndex = {
+                        'total': 1,
+                        'active': 2,
+                        'inactive': 3,
+                        'percentage': 4
+                    }[sortBy];
+                    sortTable(columnIndex);
+                }
+            });
+        });
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close sidebar on navigation (mobile)
+        function scrollToSection(section) {
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('active');
+            }
+
+            // Scroll to section
+            const sectionMap = {
+                'import': 'importSection',
+                'summary': 'summarySection',
+                'charts': 'chartsSection',
+                'details': 'detailsSection',
+                'export': ''
+            };
+
+            const sectionId = sectionMap[section];
+            if (sectionId && document.getElementById(sectionId)) {
+                document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // Focus on export dropdown if export section
+            if (section === 'export' && uploadedData) {
+                document.querySelector('.export-dropdown button').focus();
+            }
+        }
+
+        // Toggle Collapsible Sections
+        function toggleSection(contentId, toggleId) {
+            const content = document.getElementById(contentId);
+            const toggle = document.getElementById(toggleId);
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+
+        // Toggle Export Dropdown
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Show Modal
+        function showModal(title, message) {
+            document.getElementById('modalHeader').textContent = title;
+            document.getElementById('modalBody').innerHTML = message;
+            document.getElementById('messageModal').classList.add('show');
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('messageModal').classList.remove('show');
+        }
+
+        // File upload handling
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+        const uploadArea = document.querySelector('.upload-area');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload({ target: { files: files } });
+            }
+        });
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const validExtensions = ['.xlsx', '.xls'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            if (!validExtensions.includes(fileExtension)) {
+                showError('Invalid file format. Please upload an Excel file (.xlsx or .xls)');
+                return;
+            }
+
+            showLoading();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    processRVToolsData(workbook);
+                } catch (error) {
+                    console.error('Error reading file:', error);
+                    showError('Error reading file: ' + error.message);
+                }
+            };
+            reader.onerror = function() {
+                showError('Error reading file. Please try again.');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processRVToolsData(workbook) {
+            try {
+                // Update progress
+                updateProgress(20);
+                document.getElementById('loadingText').textContent = 'Parsing workbook...';
+
+                // Process different sheets
+                const vInfoSheet = workbook.Sheets['vInfo'] || workbook.Sheets['VM'] || workbook.Sheets[workbook.SheetNames[0]];
+                const vHostSheet = workbook.Sheets['vHost'] || workbook.Sheets['Host'];
+                const vDatastoreSheet = workbook.Sheets['vDatastore'] || workbook.Sheets['Datastore'];
+
+                if (!vInfoSheet) {
+                    throw new Error('Could not find VM information sheet. Please ensure the file contains a "vInfo" or "VM" sheet.');
+                }
+
+                updateProgress(40);
+                document.getElementById('loadingText').textContent = 'Processing VM data...';
+
+                const vmData = XLSX.utils.sheet_to_json(vInfoSheet);
+                const hostData = vHostSheet ? XLSX.utils.sheet_to_json(vHostSheet) : [];
+                const datastoreData = vDatastoreSheet ? XLSX.utils.sheet_to_json(vDatastoreSheet) : [];
+
+                if (vmData.length === 0) {
+                    throw new Error('No VM data found in the file.');
+                }
+
+                updateProgress(60);
+                document.getElementById('loadingText').textContent = 'Analyzing data...';
+
+                // Debug: Show available columns and sample data
+                if (vmData.length > 0) {
+                    showDebugInfo(workbook.SheetNames, vmData[0]);
+                }
+
+                uploadedData = {
+                    vms: vmData,
+                    hosts: hostData,
+                    datastores: datastoreData
+                };
+
+                updateProgress(80);
+                document.getElementById('loadingText').textContent = 'Generating summary...';
+
+                generateSummary();
+                updateProgress(100);
+
+                setTimeout(() => {
+                    showDashboard();
+                }, 500);
+            } catch (error) {
+                console.error('Error processing RVTools data:', error);
+                showError('Error processing RVTools data: ' + error.message);
+            }
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        function showDebugInfo(sheetNames, sampleVM) {
+            const debugSection = document.getElementById('debugSection');
+            const debugInfo = document.getElementById('debugInfo');
+
+            let debugHTML = `
+                <h4 class="font-semibold text-lg mb-2">Available Sheets:</h4>
+                <p class="mb-4">${sheetNames.join(', ')}</p>
+                <h4 class="font-semibold text-lg mb-2">ALL VM Columns with Sample Values:</h4>
+                <div class="bg-gray-50 p-4 rounded-lg mb-4 text-sm overflow-y-auto max-h-96">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="p-2 border-b border-gray-300">Column Name</th>
+                                <th class="p-2 border-b border-gray-300">Sample Value</th>
+                                <th class="p-2 border-b border-gray-300">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            Object.keys(sampleVM).forEach(key => {
+                const value = sampleVM[key];
+                const type = typeof value;
+                const isStorageRelated = key.toLowerCase().includes('disk') ||
+                                         key.toLowerCase().includes('storage') ||
+                                         key.toLowerCase().includes('provision') ||
+                                         key.toLowerCase().includes('space') ||
+                                         key.toLowerCase().includes('mb') ||
+                                         key.toLowerCase().includes('gb') ||
+                                         key.toLowerCase().includes('mib') ||
+                                         key.toLowerCase().includes('gib') ||
+                                         key.toLowerCase().includes('size') ||
+                                         key.toLowerCase().includes('capacity');
+
+                const rowClass = isStorageRelated ? 'bg-yellow-50 font-medium' : '';
+                debugHTML += `<tr class="${rowClass}">
+                    <td class="p-2 border-b border-gray-200">${key}</td>
+                    <td class="p-2 border-b border-gray-200">${value}</td>
+                    <td class="p-2 border-b border-gray-200">${type}</td>
+                </tr>`;
+            });
+
+            debugHTML += `</tbody></table></div>
+                <p class="text-sm text-gray-600"><strong>Note:</strong> Yellow highlighted rows are potential storage-related columns.</p>
+            `;
+
+            debugInfo.innerHTML = debugHTML;
+            debugSection.style.display = 'block';
+        }
+
+        // Export Functions
+        function exportToExcel() {
+            if (!uploadedData) {
+                showModal('Error', 'Please upload an RVTools file first.');
+                return;
+            }
+            document.getElementById('exportDropdown').classList.remove('show');
+
+            const { vms, hosts, datastores } = uploadedData;
+
+            // Calculate summary data
+            const totalVMs = vms.length;
+            const poweredOnVMs = vms.filter(vm =>
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('on') ||
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('up')
+            ).length;
+            const poweredOffVMs = totalVMs - poweredOnVMs;
+
+            const totalHosts = hosts.length;
+            const totalDatastores = datastores.length;
+
+            const totalvCPUs = vms.reduce((sum, vm) => sum + (parseInt(vm.CPUs || vm.vCPUs || vm.NumCPU || 0) || 0), 0);
+
+            let totalMemoryMB = 0;
+            vms.forEach(vm => {
+                const memoryValue = parseFloat(vm['Memory MB'] || vm.Memory || vm.MemoryMB || 0) || 0;
+                totalMemoryMB += memoryValue;
+            });
+
+            let totalStorageMB = 0;
+            vms.forEach(vm => {
+                const storageValue = parseFloat(
+                    vm['Total disk capacity MiB'] ||
+                    vm['Total Disk Capacity MiB'] ||
+                    vm['Total Disk capacity MiB'] ||
+                    vm['Provisioned MB'] ||
+                    vm['Provisioned Space MB'] ||
+                    vm.Provisioned ||
+                    vm.ProvisionedMB ||
+                    vm['Disk MB'] ||
+                    vm['Total Disk Capacity MB'] ||
+                    vm['Provisioned MiB'] ||
+                    vm['Disk MiB'] ||
+                    0
+                ) || 0;
+                totalStorageMB += storageValue;
+            });
+
+            // Calculate OS distribution
+            const osData = { Windows: 0, Linux: 0, Other: 0 };
+            vms.forEach(vm => {
+                const os = vm.OS || vm['Guest OS'] || vm.GuestOS || '';
+                const osLower = os.toLowerCase();
+                if (osLower.includes('windows')) {
+                    osData.Windows++;
+                } else if (osLower.includes('linux')) {
+                    osData.Linux++;
+                } else if (os) {
+                    osData.Other++;
+                }
+            });
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+
+            // Summary Sheet
+            const summaryData = [
+                ['RVTools Analysis Report', '', ''],
+                ['Generated on:', new Date().toLocaleString(), ''],
+                ['', '', ''],
+                ['Infrastructure Summary', '', ''],
+                ['Metric', 'Value', 'Unit'],
+                ['Total Virtual Machines', totalVMs, 'VMs'],
+                ['Powered On VMs', poweredOnVMs, 'VMs'],
+                ['Powered Off VMs', poweredOffVMs, 'VMs'],
+                ['ESX Hosts', totalHosts, 'Hosts'],
+                ['Datastores', totalDatastores, 'Stores'],
+                ['Total vCPUs', totalvCPUs, 'CPUs'],
+                ['Total Memory', Math.round(totalMemoryMB/1024), 'GB'],
+                ['Total Storage', Math.round(totalStorageMB/1024), 'GB'],
+                ['', '', ''],
+                ['OS Distribution', '', ''],
+                ['Operating System', 'Count', 'Percentage'],
+                ['Windows', osData.Windows, `${Math.round(((osData.Windows || 0) / totalVMs) * 100)}%`],
+                ['Linux', osData.Linux, `${Math.round(((osData.Linux || 0) / totalVMs) * 100)}%`],
+                ['Other', osData.Other, `${Math.round(((osData.Other || 0) / totalVMs) * 100)}%`],
+            ];
+
+            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+            summarySheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 10 }];
+            XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+
+            // VM Details Sheet
+            const vmDetailsData = [['VM Name', 'Power State', 'OS', 'vCPUs', 'Memory (MB)', 'Storage (MiB)', 'Host']];
+            vms.slice(0, 50).forEach(vm => {
+                vmDetailsData.push([
+                    vm.VM || vm.Name || vm.VMName || 'Unknown',
+                    vm.Powerstate || vm.PowerState || vm.State || 'Unknown',
+                    vm.OS || vm['Guest OS'] || vm.GuestOS || 'Unknown',
+                    vm.CPUs || vm.vCPUs || vm.NumCPU || 0,
+                    vm['Memory MB'] || vm.Memory || vm.MemoryMB || 0,
+                    vm['Total disk capacity MiB'] || vm['Total Disk Capacity MiB'] || vm['Provisioned MB'] || 0,
+                    vm.Host || vm.ESXHost || vm.ESX || 'Unknown'
+                ]);
+            });
+
+            const vmSheet = XLSX.utils.aoa_to_sheet(vmDetailsData);
+            vmSheet['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 8 }, { wch: 12 }, { wch: 15 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(wb, vmSheet, 'VM Details');
+
+            // Host Summary Sheet
+            if (hosts.length > 0) {
+                const hostDetailsData = [['Host Name', 'Cluster', 'CPU Cores', 'Memory (GB)', 'VM Count']];
+                const hostVMCounts = {};
+                vms.forEach(vm => {
+                    const host = vm.Host || vm.ESXHost || vm.ESX || 'Unknown';
+                    hostVMCounts[host] = (hostVMCounts[host] || 0) + 1;
+                });
+
+                hosts.forEach(host => {
+                    const hostName = host.Host || host.Name || host.Hostname || 'Unknown';
+                    hostDetailsData.push([
+                        hostName,
+                        host.Cluster || host.ClusterName || 'Unknown',
+                        host.Cores || host['CPU Cores'] || host.NumCores || 0,
+                        Math.round((host['Memory MB'] || host.Memory || host.MemoryMB || 0) / 1024) || 0,
+                        hostVMCounts[hostName] || 0
+                    ]);
+                });
+
+                const hostSheet = XLSX.utils.aoa_to_sheet(hostDetailsData);
+                hostSheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, hostSheet, 'Host Details');
+            }
+
+            // Resource Sheet
+            const resourceData = [
+                ['Resource Analysis', '', ''],
+                ['', '', ''],
+                ['Resource Type', 'Total Allocated', 'Unit'],
+                ['Virtual CPUs', totalvCPUs, 'vCPUs'],
+                ['Memory', Math.round(totalMemoryMB/1024), 'GB'],
+                ['Storage', Math.round(totalStorageMB/1024), 'GB'],
+                ['', '', ''],
+                ['VM Power State Distribution', '', ''],
+                ['State', 'Count', 'Percentage'],
+                ['Powered On', poweredOnVMs, `${Math.round((poweredOnVMs/totalVMs)*100)}%`],
+                ['Powered Off', poweredOffVMs, `${Math.round((poweredOffVMs/totalVMs)*100)}%`],
+            ];
+
+            const resourceSheet = XLSX.utils.aoa_to_sheet(resourceData);
+            resourceSheet['!cols'] = [{ wch: 25 }, { wch: 20 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, resourceSheet, 'Resources');
+
+            // Generate filename with timestamp
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const filename = `RVTools_Analysis_Report_${timestamp}.xlsx`;
+
+            XLSX.writeFile(wb, filename);
+            showModal('Success', `Excel report "${filename}" has been downloaded successfully!`);
+        }
+
+        function exportChartsAsImage() {
+            if (!uploadedData) {
+                showModal('Error', 'Please upload an RVTools file first.');
+                return;
+            }
+            document.getElementById('exportDropdown').classList.remove('show');
+
+            const chartContainers = document.querySelectorAll('.chart-container');
+            const promises = Array.from(chartContainers).map((container, index) => {
+                return html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `chart_${index + 1}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+
+            Promise.all(promises).then(() => {
+                showModal('Success', 'All charts have been exported as PNG images!');
+            }).catch(error => {
+                console.error('Error exporting charts:', error);
+                showModal('Error', 'Failed to export charts. Please try again.');
+            });
+        }
+
+        function exportToPDF() {
+            if (!uploadedData) {
+                showModal('Error', 'Please upload an RVTools file first.');
+                return;
+            }
+            document.getElementById('exportDropdown').classList.remove('show');
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            // Add title
+            doc.setFontSize(20);
+            doc.setTextColor(31, 41, 55);
+            doc.text('RVTools Analysis Report', pageWidth / 2, 20, { align: 'center' });
+
+            // Add timestamp
+            doc.setFontSize(10);
+            doc.setTextColor(107, 114, 128);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth / 2, 28, { align: 'center' });
+
+            let yPos = 40;
+
+            // Add summary statistics
+            doc.setFontSize(14);
+            doc.setTextColor(31, 41, 55);
+            doc.text('Infrastructure Summary', 15, yPos);
+            yPos += 10;
+
+            const totalVMs = uploadedData.vms.length;
+            const poweredOnVMs = uploadedData.vms.filter(vm =>
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('on') ||
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('up')
+            ).length;
+
+            const summaryData = [
+                ['Metric', 'Value'],
+                ['Total Virtual Machines', totalVMs.toString()],
+                ['Powered On VMs', poweredOnVMs.toString()],
+                ['Powered Off VMs', (totalVMs - poweredOnVMs).toString()],
+                ['ESX Hosts', uploadedData.hosts.length.toString()],
+                ['Datastores', uploadedData.datastores.length.toString()]
+            ];
+
+            doc.autoTable({
+                head: [['Metric', 'Value']],
+                body: summaryData.slice(1),
+                startY: yPos,
+                theme: 'grid',
+                headStyles: { fillColor: [26, 115, 232] }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Export each chart
+            const chartCanvasElements = document.querySelectorAll('canvas');
+            if (chartCanvasElements.length > 0) {
+                if (yPos > pageHeight - 100) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.text('Charts', 15, yPos);
+                yPos += 10;
+
+                for (let i = 0; i < chartCanvasElements.length; i++) {
+                    const canvas = chartCanvasElements[i];
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const imgWidth = pageWidth - 30;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    if (yPos + imgHeight > pageHeight - 20) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    doc.addImage(imgData, 'PNG', 15, yPos, imgWidth, Math.min(imgHeight, pageHeight - yPos - 20));
+                    yPos += Math.min(imgHeight, pageHeight - yPos - 20) + 10;
+                }
+            }
+
+            // Save PDF
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const filename = `RVTools_Analysis_Report_${timestamp}.pdf`;
+            doc.save(filename);
+
+            showModal('Success', `PDF report "${filename}" has been downloaded successfully!`);
+        }
+
+        function exportSummaryGraphic() {
+            if (!uploadedData) {
+                showModal('Error', 'Please upload an RVTools file first.');
+                return;
+            }
+            document.getElementById('exportDropdown').classList.remove('show');
+
+            // Create a temporary container for the summary graphic
+            const summaryContainer = document.getElementById('summarySection');
+            
+            html2canvas(summaryContainer, { 
+                scale: 2, 
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `RVTools_Summary_Dashboard_${new Date().toISOString().slice(0, 10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showModal('Success', 'Summary dashboard has been exported as a PNG image!');
+            }).catch(error => {
+                console.error('Error exporting summary:', error);
+                showModal('Error', 'Failed to export summary. Please try again.');
+            });
+        }
+
+        function generateSummary() {
+            const { vms, hosts, datastores } = uploadedData;
+
+            // Calculate summary statistics
+            const totalVMs = vms.length;
+            const poweredOnVMs = vms.filter(vm =>
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('on') ||
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('up')
+            ).length;
+            const poweredOffVMs = totalVMs - poweredOnVMs;
+
+            const totalHosts = hosts.length;
+            const totalDatastores = datastores.length;
+
+            // Calculate total resources
+            const totalvCPUs = vms.reduce((sum, vm) => sum + (parseInt(vm.CPUs || vm.vCPUs || vm.NumCPU || 0) || 0), 0);
+            const totalMemoryGB = vms.reduce((sum, vm) => sum + ((parseFloat(vm['Memory MB'] || vm.Memory || vm.MemoryMB || 0) || 0) / 1024), 0);
+
+            // Calculate storage with improved formula
+            let totalStorageGB = 0;
+            const foundStorageColumns = new Set();
+
+            vms.forEach((vm) => {
+                const allColumns = Object.keys(vm);
+                let storageValue = 0;
+                let foundColumn = null;
+
+                // Try exact matches
+                const exactMatches = [
+                    'Total disk capacity MiB', 'Total Disk Capacity MiB', 'Total Disk capacity MiB',
+                    'Provisioned MB', 'Provisioned Space MB', 'Provisioned', 'ProvisionedMB',
+                    'Disk MB', 'Total Disk Capacity MB', 'Disk Space MB', 'Allocated MB',
+                    'Size MB', 'Capacity MB', 'Used MB', 'Total MB', 'Virtual Disk MB',
+                    'Provisioned MiB', 'Disk MiB', 'Size MiB', 'Capacity MiB', 'Used MiB'
+                ];
+
+                for (const col of exactMatches) {
+                    if (vm[col] !== undefined && vm[col] !== null && vm[col] !== '') {
+                        const value = parseFloat(vm[col]);
+                        if (!isNaN(value) && value > 0) {
+                            storageValue = value;
+                            foundColumn = col;
+                            foundStorageColumns.add(col);
+                            break;
+                        }
+                    }
+                }
+
+                // Fuzzy matching
+                if (!foundColumn) {
+                    for (const col of allColumns) {
+                        const colLower = col.toLowerCase();
+                        if ((colLower.includes('provision') || colLower.includes('disk') || 
+                             colLower.includes('storage') || colLower.includes('size') ||
+                             colLower.includes('capacity')) &&
+                            (colLower.includes('mb') || colLower.includes('gb') ||
+                             colLower.includes('mib') || colLower.includes('gib'))) {
+                            const value = parseFloat(vm[col]);
+                            if (!isNaN(value) && value > 0) {
+                                storageValue = value;
+                                foundColumn = col;
+                                foundStorageColumns.add(col);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Convert to GB based on unit
+                if (foundColumn && storageValue > 0) {
+                    const colLower = foundColumn.toLowerCase();
+                    if (colLower.includes('gb') || colLower.includes('gib')) {
+                        totalStorageGB += storageValue;
+                    } else if (colLower.includes('mib')) {
+                        totalStorageGB += storageValue / 1024;
+                    } else {
+                        // Assume MB
+                        totalStorageGB += storageValue / 1024;
+                    }
+                }
+            });
+
+            console.log('Storage columns found:', Array.from(foundStorageColumns));
+            console.log('Total storage calculated (GB):', totalStorageGB);
+
+            // Create summary cards with tooltips
+            createSummaryCards([
+                { 
+                    title: 'Total VMs', 
+                    value: totalVMs, 
+                    label: 'Virtual Machines', 
+                    color: '#1a73e8',
+                    tooltip: 'Total number of virtual machines in the environment'
+                },
+                { 
+                    title: 'Powered On', 
+                    value: poweredOnVMs, 
+                    label: 'Active VMs', 
+                    color: '#34a853',
+                    tooltip: 'Number of virtual machines currently running'
+                },
+                { 
+                    title: 'Powered Off', 
+                    value: poweredOffVMs, 
+                    label: 'Inactive VMs', 
+                    color: '#ea4335',
+                    tooltip: 'Number of virtual machines currently powered off'
+                },
+                { 
+                    title: 'ESX Hosts', 
+                    value: totalHosts, 
+                    label: 'Physical Hosts', 
+                    color: '#fbbc05',
+                    tooltip: 'Number of ESX/ESXi host servers'
+                },
+                { 
+                    title: 'Datastores', 
+                    value: totalDatastores, 
+                    label: 'Storage', 
+                    color: '#4285f4',
+                    tooltip: 'Number of datastores for VM storage'
+                },
+                { 
+                    title: 'Total vCPUs', 
+                    value: totalvCPUs, 
+                    label: 'Virtual CPUs', 
+                    color: '#0f9d58',
+                    tooltip: 'Total number of virtual CPU cores allocated to VMs'
+                },
+                { 
+                    title: 'Total Memory', 
+                    value: Math.round(totalMemoryGB), 
+                    label: 'GB RAM', 
+                    color: '#3c4043',
+                    tooltip: 'Total allocated memory to all VMs in GB'
+                },
+                { 
+                    title: 'Total Storage', 
+                    value: Math.round(totalStorageGB), 
+                    label: 'GB Provisioned', 
+                    color: '#e67e22',
+                    tooltip: 'Total provisioned storage for all VMs in GB'
+                }
+            ]);
+
+            // Create charts
+            createCharts();
+
+            // Create details table
+            createDetailsTable();
+        }
+
+        function createSummaryCards(cards) {
+            const container = document.getElementById('summaryCards');
+            container.innerHTML = '';
+
+            cards.forEach(card => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.style.borderLeftColor = card.color;
+                cardEl.innerHTML = `
+                    <div class="help-tooltip" title="${card.tooltip}">?</div>
+                    <div class="tooltip-content">${card.tooltip}</div>
+                    <h3 style="color: ${card.color};">${card.title}</h3>
+                    <div class="value" style="color: ${card.color};">${card.value.toLocaleString()}</div>
+                    <div class="label">${card.label}</div>
+                `;
+                container.appendChild(cardEl);
+            });
+        }
+
+        function createCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            const { vms, hosts, datastores } = uploadedData;
+
+            // Overview Chart
+            const poweredOnVMs = vms.filter(vm =>
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('on') ||
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('up')
+            ).length;
+
+            charts.overview = new Chart(document.getElementById('overviewChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['VMs', 'Hosts', 'Datastores', 'Active VMs'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [vms.length, hosts.length, datastores.length, poweredOnVMs],
+                        backgroundColor: ['#1a73e8', '#fbbc05', '#4285f4', '#34a853'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 12 },
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#e5e7eb' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // OS Distribution Chart
+            const osData = { Windows: 0, Linux: 0, Other: 0 };
+            vms.forEach(vm => {
+                const os = vm.OS || vm['Guest OS'] || vm.GuestOS || '';
+                const osLower = os.toLowerCase();
+                if (osLower.includes('windows')) {
+                    osData.Windows++;
+                } else if (osLower.includes('linux')) {
+                    osData.Linux++;
+                } else if (os) {
+                    osData.Other++;
+                }
+            });
+
+            charts.os = new Chart(document.getElementById('osChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(osData),
+                    datasets: [{
+                        data: Object.values(osData),
+                        backgroundColor: ['#1a73e8', '#34a853', '#ea4335'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { padding: 20, usePointStyle: true }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Resource Utilization Chart
+            const totalvCPUs = vms.reduce((sum, vm) => sum + (parseInt(vm.CPUs || vm.vCPUs || vm.NumCPU || 0) || 0), 0);
+            let totalMemoryMB = vms.reduce((sum, vm) => sum + (parseFloat(vm['Memory MB'] || vm.Memory || vm.MemoryMB || 0) || 0), 0);
+            let totalStorageMB = vms.reduce((sum, vm) => {
+                const val = parseFloat(
+                    vm['Total disk capacity MiB'] ||
+                    vm['Total Disk Capacity MiB'] ||
+                    vm['Total Disk capacity MiB'] ||
+                    vm['Provisioned MB'] ||
+                    vm['Provisioned Space MB'] ||
+                    vm.Provisioned ||
+                    vm['Disk MB'] ||
+                    0
+                ) || 0;
+                return sum + val;
+            }, 0);
+
+            charts.resource = new Chart(document.getElementById('resourceChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['vCPUs', 'Memory (GB)', 'Storage (GB)'],
+                    datasets: [{
+                        label: 'Total',
+                        data: [totalvCPUs, Math.round(totalMemoryMB/1024), Math.round(totalStorageMB/1024)],
+                        backgroundColor: ['#0f9d58', '#3c4043', '#e67e22'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            callbacks: {
+                                label: function(context) {
+                                    const units = ['vCPUs', 'GB', 'GB'];
+                                    return `${context.parsed.y} ${units[context.dataIndex]}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#e5e7eb' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // ESX Host Distribution Chart
+            if (hosts.length > 0) {
+                const hostVMCounts = {};
+                vms.forEach(vm => {
+                    const host = vm.Host || vm.ESXHost || vm.ESX || 'Unknown';
+                    hostVMCounts[host] = (hostVMCounts[host] || 0) + 1;
+                });
+
+                const sortedHosts = Object.entries(hostVMCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+
+                charts.esx = new Chart(document.getElementById('esxChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: sortedHosts.map(h => h[0]),
+                        datasets: [{
+                            label: 'VMs per Host',
+                            data: sortedHosts.map(h => h[1]),
+                            backgroundColor: '#fbbc05',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1f2937'
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#e5e7eb' } },
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    autoSkip: false,
+                                    maxTicksLimit: 10
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Remove chart canvas if no hosts
+                const chartContainer = document.getElementById('esxChart')?.parentElement;
+                if (chartContainer) {
+                    chartContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No host data available</p>';
+                }
+            }
+        }
+
+        function createDetailsTable() {
+            const { vms, hosts, datastores } = uploadedData;
+            const tbody = document.getElementById('detailsTableBody');
+            tbody.innerHTML = '';
+
+            const poweredOnVMs = vms.filter(vm =>
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('on') ||
+                (vm.Powerstate || vm.PowerState || vm.State || '').toLowerCase().includes('up')
+            ).length;
+
+            tableData = [
+                { component: 'Virtual Machines', total: vms.length, active: poweredOnVMs, inactive: vms.length - poweredOnVMs },
+                { component: 'ESX Hosts', total: hosts.length, active: hosts.length, inactive: 0 },
+                { component: 'Datastores', total: datastores.length, active: datastores.length, inactive: 0 }
+            ];
+
+            renderTable(tableData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('detailsTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                const percentage = item.total > 0 ? Math.round((item.active / item.total) * 100) : 0;
+                row.innerHTML = `
+                    <td><strong>${item.component}</strong></td>
+                    <td>${item.total}</td>
+                    <td>${item.active}</td>
+                    <td>${item.inactive}</td>
+                    <td>${percentage}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function sortTable(columnIndex) {
+            const keys = ['component', 'total', 'active', 'inactive', 'percentage'];
+            const key = keys[columnIndex];
+
+            sortDirection[key] = sortDirection[key] === 'asc' ? 'desc' : 'asc';
+
+            tableData.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+
+                if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+
+                if (valA < valB) return sortDirection[key] === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection[key] === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTable(tableData);
+
+            // Update header styles
+            document.querySelectorAll('th').forEach((th, index) => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (index === columnIndex) {
+                    th.classList.add(sortDirection[key] === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        function filterTable() {
+            const filterText = document.getElementById('tableFilter').value.toLowerCase();
+            const filteredData = tableData.filter(item => 
+                item.component.toLowerCase().includes(filterText)
+            );
+            renderTable(filteredData);
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('loadingText').textContent = 'Processing RVTools file...';
+        }
+
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorMessage').innerHTML = `<strong>Error:</strong> ${message}<br><br><button class="action-button" onclick="resetUpload()">Try Again</button>`;
+        }
+
+        function showDashboard() {
+            document.getElementById('importSection').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            // Scroll to summary section
+            setTimeout(() => {
+                document.getElementById('summarySection')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function resetUpload() {
+            closeModal();
+            document.getElementById('importSection').style.display = 'block';
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('debugSection').style.display = 'none';
+
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            tableData = [];
+            uploadedData = null;
+            sortDirection = {};
+        }
+    </script>
+</body>
+</html>

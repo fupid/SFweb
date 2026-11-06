@@ -1,0 +1,1023 @@
+<?php
+$filename = 'inventory.json';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $jsonData = file_get_contents('php://input');
+    if ($jsonData) { file_put_contents($filename, $jsonData); header('Content-Type: application/json'); echo json_encode(["status"=>"success"]); exit; }
+}
+if (!file_exists($filename)) {
+    $defaultData = ["servers"=>[["name"=>"aServer-X5-2405","socket"=>2,"core"=>32,"freq"=>2.8,"baseRam"=>128,"maxDisk"=>12,"maxDimm"=>32]],"ssds"=>[480,960,1920,3840,7680],"hdds"=>[1200,2400,4000,8000,12000]];
+    file_put_contents($filename, json_encode($defaultData, JSON_PRETTY_PRINT));
+}
+$inventoryData = file_get_contents($filename);
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Sangfor HCI Central Sizer - Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .usable-cell { color: #16a34a; font-weight: 700; background-color: #f0fdf4; }
+        .fail-cell { color: #dc2626; font-weight: 700; background-color: #fef2f2; }
+        .pool-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: white; margin-bottom: 6px; }
+        .pool-card.has-error { border-color: #fca5a5; background-color: #fff5f5; }
+        .pool-stat { font-size: 9px; color: #6b7280; font-style: italic; }
+        .err-badge { font-size: 9px; color: #dc2626; font-weight: 700; margin-top: 2px; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+<nav class="max-w-7xl mx-auto mb-6 flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border no-print">
+    <div class="flex space-x-2">
+        <a href="index.html" class="px-4 py-2 rounded-lg font-medium text-gray-500 hover:bg-gray-100 transition flex items-center gap-1.5 no-underline" style="text-decoration:none; color:inherit;">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            Menu
+        </a>
+        <button onclick="switchTab('sizing')" class="px-6 py-2 rounded-lg font-bold bg-blue-600 text-white shadow-md transition">Sizing Tool</button>
+        <button onclick="checkAdminAuth()" class="px-6 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition">Inventory Admin</button>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded">● Sync Active (File Based)</span>
+        <button onclick="exportPDF()" class="bg-green-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-green-700 shadow-sm transition">📄 Export PDF</button>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print">
+        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Nodes</p>
+            <p class="text-2xl font-bold text-blue-700" id="smNodes">-</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Compute (GHz)</p>
+            <p class="text-2xl font-bold text-blue-700" id="smCPU">-</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">VM Memory (GB)</p>
+            <p class="text-2xl font-bold text-green-600" id="smRAM">-</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Storage (TB)</p>
+            <p class="text-2xl font-bold text-orange-600" id="smStore">-</p>
+        </div>
+    </div>
+
+    <div id="content-sizing" class="tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- ===== LEFT PANEL ===== -->
+            <div class="lg:col-span-4 no-print">
+                <div class="bg-white p-5 rounded-xl border shadow-sm">
+                    <h3 class="text-blue-700 font-bold border-b pb-3 mb-4 text-xs uppercase flex justify-between">
+                        ⚙️ Cluster Setup
+                        <span class="text-[9px] bg-blue-50 text-blue-500 px-2 py-1 rounded">Connected</span>
+                    </h3>
+                    <div class="space-y-4 text-sm">
+
+                        <!-- Server Model -->
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Server Model</label>
+                            <select id="selModel" onchange="handleModelChange()" class="w-full border p-2 rounded-md font-bold bg-blue-50 border-blue-200 outline-none mt-1"></select>
+                        </div>
+
+                        <!-- Manual Config -->
+                        <div id="manualArea" class="hidden p-3 bg-orange-50 rounded-xl border border-orange-200">
+                            <div class="text-[9px] font-bold text-orange-600 uppercase mb-2">Custom Configuration</div>
+                            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                <div>Sockets<input type="number" id="mSocket" value="2" min="1" max="2" onchange="calculate()" class="w-full border p-1 rounded mt-1"></div>
+                                <div>Cores/Socket<input type="number" id="mCore" value="16" onchange="calculate()" class="w-full border p-1 rounded mt-1"></div>
+                                <div>Base GHz<input type="number" id="mFreq" step="0.1" value="2.8" onchange="calculate()" class="w-full border p-1 rounded mt-1"></div>
+                                <div>Base RAM (GB)<input type="number" id="mBaseRam" value="128" onchange="handleModelChange()" class="w-full border p-1 rounded mt-1"></div>
+                                <div>Max Disk Slots<input type="number" id="mMaxDisk" value="12" onchange="calculate()" class="w-full border p-1 rounded mt-1"></div>
+                                <div>Max DIMM Slots<input type="number" id="mMaxDimm" value="24" onchange="updateRamOptions()" class="w-full border p-1 rounded mt-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- Memory Configuration: Base + Expansion DIMM -->
+                        <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-100 space-y-2">
+                            <div class="font-bold text-blue-800 uppercase text-[10px] border-b border-blue-100 pb-1">Memory Configuration</div>
+
+                            <!-- Base DIMM -->
+                            <div class="bg-white rounded border p-2">
+                                <div class="text-[9px] font-bold text-gray-500 uppercase mb-1.5">Base Config (shipped in box)</div>
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    <div>
+                                        <div class="text-[9px] text-gray-400 mb-0.5">DIMM Size</div>
+                                        <select id="selBaseDimmSize" onchange="updateRamOptions()"
+                                            class="w-full border p-1 rounded bg-white font-bold text-[10px]">
+                                            <option value="16">16 GB</option>
+                                            <option value="32" selected>32 GB</option>
+                                            <option value="64">64 GB</option>
+                                            <option value="128">128 GB</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <div class="text-[9px] text-gray-400 mb-0.5">DIMM Count</div>
+                                        <input type="number" id="inpBaseDimmCount" value="4" min="1"
+                                            onchange="updateRamOptions()"
+                                            class="w-full border p-1 rounded font-bold text-[10px] text-center bg-blue-50">
+                                    </div>
+                                </div>
+                                <div id="lblBaseRamConfig" class="text-[9px] text-blue-700 font-bold mt-1"></div>
+                            </div>
+
+                            <!-- Expansion DIMM -->
+                            <div class="bg-white rounded border p-2">
+                                <div class="text-[9px] font-bold text-gray-500 uppercase mb-1.5">Expansion DIMM (optional)</div>
+                                <div class="grid grid-cols-2 gap-1.5 mb-1">
+                                    <div>
+                                        <div class="text-[9px] text-gray-400 mb-0.5">Exp. DIMM Size</div>
+                                        <select id="selExpDimmSize" onchange="updateRamOptions()"
+                                            class="w-full border p-1 rounded bg-white font-bold text-[10px]">
+                                            <option value="16">16 GB</option>
+                                            <option value="32" selected>32 GB</option>
+                                            <option value="64">64 GB</option>
+                                            <option value="128">128 GB</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <div class="text-[9px] text-gray-400 mb-0.5">Add Config</div>
+                                        <select id="selExpDimmCount" onchange="calculate()"
+                                            class="w-full border p-1 rounded bg-white text-[10px]"></select>
+                                    </div>
+                                </div>
+                                <div id="lblRemainSlots" class="text-[9px] text-gray-400"></div>
+                            </div>
+
+                            <div class="text-[9px] font-bold text-blue-900 bg-blue-100 rounded p-1.5" id="lblTotalRamSummary"></div>
+                        </div>
+
+                        <!-- Total Nodes -->
+                        <div class="border-t pt-3 text-[10px]">
+                            <label class="font-bold text-gray-500 uppercase block mb-1">Total Nodes in Cluster</label>
+                            <input type="number" id="qtyNode" value="3" min="2" onchange="calculate()"
+                                class="w-full border p-3 rounded-md font-bold text-blue-800 text-lg border-blue-200">
+                        </div>
+
+                        <!-- Storage Pools -->
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="text-[10px] font-bold text-gray-600 uppercase">Storage Pools (Datastores)</label>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="diskSlotBadge" class="text-[9px] px-2 py-0.5 rounded font-bold bg-gray-100 text-gray-500">0/12 slots/node</span>
+                                    <button onclick="addPool()" class="text-blue-600 text-[10px] font-bold hover:underline px-2 py-1 bg-blue-50 rounded">+ Add Pool</button>
+                                </div>
+                            </div>
+                            <div id="poolGlobalError" class="hidden mb-2 p-2 bg-red-50 border border-red-200 rounded text-[9px] text-red-700 font-bold space-y-1"></div>
+                            <div id="poolsContainer" class="space-y-1"></div>
+                        </div>
+
+                        <button onclick="calculate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition active:scale-95 text-sm">🚀 Calculate Results</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== RIGHT PANEL ===== -->
+            <div id="pdf-area" class="lg:col-span-8 space-y-6">
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                    <h4 class="text-emerald-800 font-bold text-xs mb-3">📐 Sizing Formulas Reference</h4>
+                    <div class="space-y-2 text-[10px] text-emerald-900/80">
+                        <div class="bg-white p-2 rounded border border-emerald-100 shadow-sm" id="f-cpu"></div>
+                        <div class="bg-white p-2 rounded border border-emerald-100 shadow-sm" id="f-ram"></div>
+                        <div class="bg-white p-2 rounded border border-emerald-100 shadow-sm font-bold text-blue-800" id="f-storage"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="bg-[#1e40af] text-white px-5 py-3 font-bold text-sm">📊 Resource Capacity Summary</div>
+                    <table class="w-full text-xs text-center border-collapse">
+                        <thead class="bg-gray-50 text-gray-400 font-bold text-[9px] uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3 text-left border-b">Resource Component</th>
+                                <th class="px-6 py-3 border-b">Total Cluster</th>
+                                <th class="px-6 py-3 border-b">Usable</th>
+                                <th class="px-6 py-3 border-b">After Node Failure</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBody" class="divide-y text-gray-700 italic"></tbody>
+                    </table>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="bg-[#1e40af] text-white px-5 py-3 font-bold text-sm">📋 Detailed Specification Breakdown</div>
+                    <table class="w-full text-xs text-left divide-y">
+                        <tbody id="detailBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="content-admin" class="tab-content">
+        <div class="bg-white p-6 rounded-xl border shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-gray-700 uppercase text-xs tracking-widest">🗄️ Shared Inventory Admin (JSON Sync)</h3>
+                <button onclick="openModal('server')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-md">+ Add Model</button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 overflow-x-auto border rounded-xl"><table class="w-full text-xs" id="adminServerTable"></table></div>
+                <div class="space-y-4" id="adminCompPanel"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Admin Modal -->
+<div id="adminModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl">
+        <h3 id="modalTitle" class="text-lg font-bold mb-4 text-blue-700 border-b pb-2">Add Item</h3>
+        <div id="modalBody" class="space-y-4"></div>
+        <div class="flex space-x-3 mt-8">
+            <button onclick="saveAdminItem()" class="flex-1 bg-blue-700 text-white py-3 rounded-2xl font-bold hover:bg-blue-800">Save to Server</button>
+            <button onclick="closeModal()" class="flex-1 bg-gray-100 py-3 rounded-2xl">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="fixed inset-0 bg-slate-950/90 hidden flex items-center justify-center z-[100] p-4">
+    <div class="bg-white rounded-[2rem] w-full max-w-sm p-10 text-center shadow-2xl shadow-blue-500/10">
+        <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold">🔐</div>
+        <h2 class="text-2xl font-bold mb-2">Admin Portal</h2>
+        <p class="text-gray-400 text-[10px] mb-8 uppercase tracking-widest">Locked: Verification Required</p>
+        <div class="space-y-4 text-left">
+            <div><label class="text-[9px] font-bold text-gray-400 ml-2">Username</label><input type="text" id="user" class="w-full border p-4 rounded-2xl bg-gray-50 outline-none" value="admin"></div>
+            <div><label class="text-[9px] font-bold text-gray-400 ml-2">Password</label><input type="password" id="pass" class="w-full border p-4 rounded-2xl bg-gray-50 outline-none" placeholder="••••••••"></div>
+        </div>
+        <button onclick="doLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold mt-10 shadow-xl shadow-blue-200 transition active:scale-95">Sign In</button>
+    </div>
+</div>
+
+<script>
+let db = <?php echo $inventoryData; ?>;
+let currentType = null;
+let storagePools = [];
+let nextPoolId = 1;
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+
+function fmtDisk(gb) {
+    if (gb >= 1000) {
+        const tb = gb / 1000;
+        return (tb === Math.floor(tb)) ? tb + ' TB' : tb.toFixed(1) + ' TB';
+    }
+    return gb + ' GB';
+}
+
+function getValidStripeCounts(sockets, maxDimm) {
+    const one = [4, 8, 12, 16];
+    const two = [4, 8, 12, 16, 24, 32];
+    return (sockets === 1 ? one : two).filter(c => c <= (maxDimm || 32));
+}
+
+function getCurrentHW() {
+    const mVal = document.getElementById('selModel').value;
+    if (mVal === 'custom') {
+        return {
+            name: 'Custom',
+            socket:  Number(document.getElementById('mSocket').value)  || 2,
+            core:    Number(document.getElementById('mCore').value)    || 16,
+            freq:    Number(document.getElementById('mFreq').value)    || 2.8,
+            baseRam: Number(document.getElementById('mBaseRam').value) || 128,
+            maxDisk: Number(document.getElementById('mMaxDisk').value) || 12,
+            maxDimm: Number(document.getElementById('mMaxDimm').value) || 24
+        };
+    }
+    return db.servers.find(x => x.name === mVal) || db.servers[0];
+}
+
+// ─── Memory / DIMM ─────────────────────────────────────────────────────────────
+
+function updateRamOptions() {
+    const hw      = getCurrentHW();
+    const maxDimm = hw.maxDimm || 32;
+
+    const baseSz  = Number(document.getElementById('selBaseDimmSize').value) || 32;
+    let   baseCnt = parseInt(document.getElementById('inpBaseDimmCount').value) || 4;
+    const expSz   = Number(document.getElementById('selExpDimmSize').value)  || 32;
+
+    // Clamp base count to [1, maxDimm]
+    baseCnt = Math.max(1, Math.min(baseCnt, maxDimm));
+    document.getElementById('inpBaseDimmCount').value = baseCnt;
+
+    const baseRam     = baseCnt * baseSz;
+    const remainSlots = maxDimm - baseCnt;
+
+    // Valid stripe totals >= baseCnt and <= maxDimm
+    const allStripes  = getValidStripeCounts(hw.socket, maxDimm);
+    const validTotals = allStripes.filter(t => t >= baseCnt);
+
+    // Build expansion options
+    const expSel  = document.getElementById('selExpDimmCount');
+    const prevExp = Number(expSel.value) || 0;
+
+    expSel.innerHTML = validTotals.map(total => {
+        const ec       = total - baseCnt;
+        const totalRam = baseRam + ec * expSz;
+        const label    = ec === 0
+            ? `No expansion → Total: ${baseRam} GB`
+            : `+${ec} DIMMs (+${ec * expSz} GB) → ${totalRam} GB (${total}/${maxDimm} slots)`;
+        return `<option value="${ec}" ${ec === prevExp ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+
+    // Reset to 0 if previous expansion is no longer a valid option
+    const validExps = validTotals.map(t => t - baseCnt);
+    if (!validExps.includes(prevExp)) expSel.value = 0;
+
+    document.getElementById('lblBaseRamConfig').innerText =
+        `= ${baseRam} GB  (${baseCnt} of ${maxDimm} DIMM slots used)`;
+    document.getElementById('lblRemainSlots').innerText =
+        `Available: ${remainSlots} remaining slots | Valid totals: ${validTotals.join(', ')} DIMMs`;
+
+    calculate();
+}
+
+// ─── Storage Pools ─────────────────────────────────────────────────────────────
+
+function buildDiskOptions(arr, selectedVal) {
+    const inArr = arr.some(v => v == selectedVal);
+    let opts = arr.map(v => `<option value="${v}" ${v == selectedVal && inArr ? 'selected' : ''}>${fmtDisk(v)}</option>`).join('');
+    opts += `<option value="custom" ${!inArr ? 'selected' : ''}>✏️ Custom (GB)...</option>`;
+    return opts;
+}
+
+function renderPool(pool, idx) {
+    const hw          = getCurrentHW();
+    const nodes       = parseInt(document.getElementById('qtyNode')?.value) || 3;
+    const hddInArr    = db.hdds.some(v => v == pool.hddSize);
+    const ssdInArr    = db.ssds.some(v => v == pool.ssdSize);
+    const reqSSD      = (pool.type === 'hybrid') ? Math.ceil(pool.hddQty / 7) : 0;
+    const hasRatioErr = (pool.type === 'hybrid') && pool.ssdQty < reqSSD;
+    const wrongCopies = nodes < pool.copies;
+
+    // Per-pool disk count and max disk check
+    const poolDisks   = pool.ssdQty + (pool.type === 'hybrid' ? pool.hddQty : 0);
+
+    // Live stat line
+    let statLine = '';
+    if (pool.type === 'hybrid') {
+        const rawHDD = pool.hddSize * pool.hddQty * nodes / 1024;
+        const usable = (rawHDD / pool.copies) * 0.85;
+        const cache  = pool.ssdSize * pool.ssdQty * nodes;
+        statLine = `≈${usable.toFixed(1)}TB usable | ${cache}GB cache`;
+    } else {
+        const rawSSD = pool.ssdSize * pool.ssdQty * nodes / 1024;
+        const usable = (rawSSD / pool.copies) * 0.85;
+        statLine = `≈${usable.toFixed(1)}TB usable (All Flash)`;
+    }
+
+    const canRemove = storagePools.length > 1;
+    const hasAnyErr = hasRatioErr || wrongCopies;
+
+    return `<div class="pool-card ${hasAnyErr ? 'has-error' : ''}">
+        <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-blue-700" style="font-size:11px">📦 Pool ${idx + 1}
+                <span class="font-normal text-gray-400 text-[9px] ml-1">${poolDisks} disks/node</span>
+            </span>
+            <span class="pool-stat flex-1 text-center px-1">${statLine}</span>
+            ${canRemove ? `<button onclick="removePool(${pool.id})" class="text-red-400 hover:text-red-600 font-bold text-sm ml-1" title="Remove">✕</button>` : '<span class="w-4"></span>'}
+        </div>
+
+        <div class="grid grid-cols-2 gap-1 mb-2" style="font-size:10px">
+            <div>
+                <div class="text-gray-400" style="font-size:9px">Pool Type</div>
+                <select onchange="updatePool(${pool.id},'type',this.value)"
+                    class="w-full border p-1 rounded ${pool.type === 'hybrid' ? 'bg-yellow-50' : 'bg-blue-50'}"
+                    style="font-size:10px">
+                    <option value="hybrid"   ${pool.type === 'hybrid'   ? 'selected' : ''}>Hybrid</option>
+                    <option value="allflash" ${pool.type === 'allflash' ? 'selected' : ''}>All Flash</option>
+                </select>
+            </div>
+            <div>
+                <div class="text-gray-400" style="font-size:9px">Protection</div>
+                <select onchange="updatePool(${pool.id},'copies',this.value)"
+                    class="w-full border p-1 rounded bg-yellow-50 font-bold"
+                    style="font-size:10px">
+                    <option value="2" ${pool.copies == 2 ? 'selected' : ''}>2 Copies</option>
+                    <option value="3" ${pool.copies == 3 ? 'selected' : ''}>3 Copies</option>
+                </select>
+            </div>
+        </div>
+
+        ${pool.type === 'hybrid' ? `
+        <div class="mb-2" style="font-size:10px">
+            <div class="text-gray-500 font-bold uppercase mb-1" style="font-size:9px">HDD Capacity Tier</div>
+            <div class="flex gap-1">
+                <div class="flex-1">
+                    <select onchange="handlePoolDisk(${pool.id},'hdd',this.value)"
+                        class="w-full border p-1 rounded bg-white" style="font-size:10px">
+                        ${buildDiskOptions(db.hdds, pool.hddSize)}
+                    </select>
+                    <input type="number" id="cHDD-${pool.id}"
+                        value="${!hddInArr ? pool.hddSize : ''}" placeholder="Custom GB"
+                        onchange="updatePool(${pool.id},'hddSize',this.value)"
+                        class="w-full border p-1 rounded mt-1 ${hddInArr ? 'hidden' : ''}"
+                        style="font-size:10px">
+                </div>
+                <div style="width:54px">
+                    <div class="text-[9px] text-center text-gray-400">Qty/Node</div>
+                    <input type="number" value="${pool.hddQty}" min="1"
+                        onchange="updatePool(${pool.id},'hddQty',this.value)"
+                        class="w-full border p-1 rounded text-center font-bold" style="font-size:10px">
+                </div>
+            </div>
+        </div>` : ''}
+
+        <div style="font-size:10px">
+            <div class="text-gray-500 font-bold uppercase mb-1" style="font-size:9px">${pool.type === 'hybrid' ? 'SSD Cache Tier' : 'SSD Capacity Tier'}</div>
+            <div class="flex gap-1">
+                <div class="flex-1">
+                    <select onchange="handlePoolDisk(${pool.id},'ssd',this.value)"
+                        class="w-full border p-1 rounded bg-white" style="font-size:10px">
+                        ${buildDiskOptions(db.ssds, pool.ssdSize)}
+                    </select>
+                    <input type="number" id="cSSD-${pool.id}"
+                        value="${!ssdInArr ? pool.ssdSize : ''}" placeholder="Custom GB"
+                        onchange="updatePool(${pool.id},'ssdSize',this.value)"
+                        class="w-full border p-1 rounded mt-1 ${ssdInArr ? 'hidden' : ''}"
+                        style="font-size:10px">
+                </div>
+                <div style="width:54px">
+                    <div class="text-[9px] text-center text-gray-400">Qty/Node</div>
+                    <input type="number" value="${pool.ssdQty}" min="1"
+                        onchange="updatePool(${pool.id},'ssdQty',this.value)"
+                        class="w-full border p-1 rounded text-center font-bold" style="font-size:10px">
+                </div>
+            </div>
+        </div>
+
+        ${hasRatioErr   ? `<div class="err-badge mt-1">⚠️ Hybrid needs min ${reqSSD} SSD/node for ${pool.hddQty} HDD (1 SSD per 7 HDD)</div>` : ''}
+        ${wrongCopies   ? `<div class="err-badge">⚠️ ${pool.copies}-Copy requires ≥${pool.copies} nodes (current: ${nodes})</div>` : ''}
+    </div>`;
+}
+
+function renderPools() {
+    const container = document.getElementById('poolsContainer');
+    if (!container) return;
+    container.innerHTML = storagePools.map((p, i) => renderPool(p, i)).join('');
+    calculate();
+}
+
+function addPool() {
+    const id = nextPoolId++;
+    storagePools.push({
+        id, type: 'hybrid', copies: 2,
+        ssdSize: db.ssds[1] || 960,  ssdQty: 1,
+        hddSize: db.hdds[db.hdds.length > 3 ? 3 : 0] || 8000, hddQty: 7
+    });
+    renderPools();
+}
+
+function removePool(id) {
+    if (storagePools.length <= 1) { alert('At least 1 storage pool is required.'); return; }
+    storagePools = storagePools.filter(p => p.id !== id);
+    renderPools();
+}
+
+function updatePool(id, field, value) {
+    const pool = storagePools.find(p => p.id === id);
+    if (!pool) return;
+    if (['copies', 'ssdQty', 'hddQty'].includes(field)) value = Math.max(1, parseInt(value) || 1);
+    if (['ssdSize', 'hddSize'].includes(field)) value = parseFloat(value) || 0;
+    pool[field] = value;
+    if (field === 'type') renderPools();
+    else calculate();
+}
+
+function handlePoolDisk(poolId, diskType, value) {
+    if (value === 'custom') {
+        const inp = document.getElementById(`c${diskType.toUpperCase()}-${poolId}`);
+        if (inp) inp.classList.remove('hidden');
+        return;
+    }
+    const inp = document.getElementById(`c${diskType.toUpperCase()}-${poolId}`);
+    if (inp) inp.classList.add('hidden');
+    updatePool(poolId, diskType + 'Size', value);
+}
+
+// ─── Calculate ─────────────────────────────────────────────────────────────────
+
+function calculate() {
+    const nodes = Math.max(2, Number(document.getElementById('qtyNode').value) || 3);
+    const hw    = getCurrentHW();
+
+    // ── RAM from DIMM config ──
+    const baseSz       = Number(document.getElementById('selBaseDimmSize').value)  || 32;
+    const baseCnt      = Math.max(1, parseInt(document.getElementById('inpBaseDimmCount').value) || 4);
+    const expSz        = Number(document.getElementById('selExpDimmSize').value)   || 32;
+    const expCnt       = Number(document.getElementById('selExpDimmCount').value)  || 0;
+    const totalDimm    = baseCnt + expCnt;
+    const baseRamAmt   = baseCnt * baseSz;
+    const expRamAmt    = expCnt  * expSz;
+    const totalRamNode = baseRamAmt + expRamAmt;
+
+    // Update total RAM label
+    const maxDimm = hw.maxDimm || 32;
+    const dimmOverLimit = totalDimm > maxDimm;
+    const lblSummary = document.getElementById('lblTotalRamSummary');
+    if (lblSummary) {
+        lblSummary.innerText = `Total RAM/Node: ${totalRamNode} GB | ${totalDimm}/${maxDimm} DIMM slots${dimmOverLimit ? ' ⚠️ OVER LIMIT' : ''}`;
+        lblSummary.className = `text-[9px] font-bold rounded p-1.5 ${dimmOverLimit ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-900'}`;
+    }
+
+    // ── CPU ──
+    const reserved  = 3;
+    const nodeFreq  = hw.socket * hw.core * hw.freq * 1.2;
+    const uFreqNode = (hw.socket * hw.core - reserved) * hw.freq * 1.2;
+    const failNodes = Math.max(0, nodes - 1);
+
+    // ── Disk slot validation ──
+    const totalDisksPerNode = storagePools.reduce((s, p) => {
+        return s + p.ssdQty + (p.type === 'hybrid' ? p.hddQty : 0);
+    }, 0);
+    const diskOverLimit = totalDisksPerNode > hw.maxDisk;
+
+    const dsBadge = document.getElementById('diskSlotBadge');
+    if (dsBadge) {
+        dsBadge.innerText = `${totalDisksPerNode}/${hw.maxDisk} disk slots/node`;
+        dsBadge.className = 'text-[9px] px-2 py-0.5 rounded font-bold ' +
+            (diskOverLimit ? 'bg-red-100 text-red-600' :
+             totalDisksPerNode === hw.maxDisk ? 'bg-yellow-100 text-yellow-700' :
+             'bg-green-100 text-green-700');
+    }
+
+    // ── Pool validation ──
+    const globalErrors = [];
+
+    if (dimmOverLimit) {
+        globalErrors.push(`⚠️ Total DIMM count (${totalDimm}) exceeds ${hw.name || 'this model'} max: ${maxDimm} slots`);
+    }
+    if (diskOverLimit) {
+        globalErrors.push(`⚠️ Disk slots/node (${totalDisksPerNode}) exceeds ${hw.name || 'this model'} max: ${hw.maxDisk} bays`);
+    }
+    if (nodes <= 2 && storagePools.length > 1) {
+        globalErrors.push(`⚠️ 2-node cluster supports only 1 datastore. Use 3+ nodes for multiple pools.`);
+    }
+    storagePools.forEach((pool, i) => {
+        if (pool.type === 'hybrid') {
+            const req = Math.ceil(pool.hddQty / 7);
+            if (pool.ssdQty < req) globalErrors.push(`⚠️ Pool ${i+1}: Need ${req} SSD/node (1 per 7 HDD)`);
+        }
+        if (nodes < pool.copies) globalErrors.push(`⚠️ Pool ${i+1}: ${pool.copies}-Copy requires ≥${pool.copies} nodes`);
+    });
+
+    const errEl = document.getElementById('poolGlobalError');
+    if (errEl) {
+        if (globalErrors.length) {
+            errEl.innerHTML = globalErrors.map(e => `<div>${e}</div>`).join('');
+            errEl.classList.remove('hidden');
+        } else {
+            errEl.classList.add('hidden');
+        }
+    }
+
+    // ── Aggregate pool storage ──
+    let totalCacheGB = 0, totalCacheFailGB = 0, totalUsableTB = 0, totalRawTB = 0;
+    let hybridHDDRawTB = 0, hybridSSDCacheGB = 0;
+    let diskOverheadPerNode = 0;
+
+    storagePools.forEach(pool => {
+        if (pool.type === 'hybrid') {
+            // Hybrid: SSD = cache tier → 0.5% of SSD capacity; HDD = data tier → 1 GB/disk
+            diskOverheadPerNode += (0.5 * pool.ssdSize * pool.ssdQty / 100) + pool.hddQty;
+            const rawHDD   = pool.hddSize * pool.hddQty * nodes;
+            const usable   = (rawHDD / pool.copies) * 0.85 / 1024;
+            const cacheAll = pool.ssdSize * pool.ssdQty * nodes;
+            const cacheFail= pool.ssdSize * pool.ssdQty * failNodes;
+            totalCacheGB      += cacheAll;
+            totalCacheFailGB  += cacheFail;
+            totalUsableTB     += usable;
+            totalRawTB        += rawHDD / 1024;
+            hybridHDDRawTB    += rawHDD / 1024;
+            hybridSSDCacheGB  += cacheAll;
+        } else {
+            // All Flash: SSD = capacity tier → 1 GB RAM per disk (no cache overhead)
+            diskOverheadPerNode += pool.ssdQty;
+            const rawSSD = pool.ssdSize * pool.ssdQty * nodes;
+            const usable = (rawSSD / pool.copies) * 0.85 / 1024;
+            totalUsableTB += usable;
+            totalRawTB    += rawSSD / 1024;
+        }
+    });
+
+    // sys_consume = 21 (aCloud 7 + aSAN 7 + Other 7) + disk overhead
+    const sysConsumePerNode = 21 + diskOverheadPerNode;
+    const cacheRatio  = hybridHDDRawTB > 0 ? (hybridSSDCacheGB / 1024 / hybridHDDRawTB * 100) : 0;
+    const ratioColor  = cacheRatio >= 5 ? 'text-green-600' : 'text-red-600';
+
+    // usable VM RAM: installed RAM − system consume
+    const usableRamNode = Math.max(0, totalRamNode - sysConsumePerNode);
+
+    // ── Top Status Bar ──
+    document.getElementById('smNodes').innerText  = nodes;
+    document.getElementById('smCPU').innerText    = (uFreqNode * nodes).toFixed(1) + 'G';
+    document.getElementById('smRAM').innerText    = (usableRamNode * nodes).toFixed(0);
+    document.getElementById('smStore').innerText  = totalUsableTB.toFixed(1) + 'TB';
+
+    // ── Formulas ──
+    document.getElementById('f-cpu').innerHTML =
+        `<strong>CPU:</strong> ${hw.socket}S × ${hw.core} cores × ${hw.freq} GHz × 1.2 boost = <strong>${nodeFreq.toFixed(1)} GHz/node</strong>`;
+    document.getElementById('f-ram').innerHTML =
+        `<strong>RAM:</strong> System Consume/node = 21 + disk overhead = <strong>${sysConsumePerNode.toFixed(1)} GB</strong> → VM Usable = ${totalRamNode} − ${sysConsumePerNode.toFixed(1)} = <strong>${usableRamNode.toFixed(0)} GB/node</strong>`;
+    document.getElementById('f-storage').innerHTML =
+        `<strong>Storage:</strong> ${storagePools.length} Pool(s) | RAW: ${totalRawTB.toFixed(2)} TB → After copies + 15% eff. = <strong>${totalUsableTB.toFixed(2)} TB usable</strong>`;
+
+    // ── Per-pool rows ──
+    let poolRows = '';
+    storagePools.forEach((pool, i) => {
+        if (pool.type === 'hybrid') {
+            const rawHDD   = pool.hddSize * pool.hddQty * nodes / 1024;
+            const usable   = (rawHDD / pool.copies) * 0.85;
+            const cache    = pool.ssdSize * pool.ssdQty * nodes;
+            const ratio    = pool.hddQty > 0 ? (pool.ssdQty / pool.hddQty * 100).toFixed(0) : 0;
+            const rOk      = Number(ratio) >= (100/7);
+            const poolDisks= pool.hddQty + pool.ssdQty;
+            poolRows += `<tr class="bg-orange-50/40">
+                <td class="px-6 py-2 font-bold text-left text-[10px] text-orange-700">
+                    Pool ${i+1}: Hybrid (${pool.copies}-Copy) — ${pool.hddQty}×${fmtDisk(pool.hddSize)} HDD + ${pool.ssdQty}×${fmtDisk(pool.ssdSize)} SSD/node [${poolDisks} disks/node]
+                </td>
+                <td class="text-center text-[10px]">${rawHDD.toFixed(1)} TB RAW</td>
+                <td class="usable-cell text-[10px]">${usable.toFixed(2)} TB</td>
+                <td class="text-center text-[10px]">Cache: ${cache} GB | Ratio: <span class="${rOk?'text-green-600':'text-red-600'} font-bold">${ratio}% ${rOk?'✓':'⚠'}</span></td>
+            </tr>`;
+        } else {
+            const rawSSD   = pool.ssdSize * pool.ssdQty * nodes / 1024;
+            const usable   = (rawSSD / pool.copies) * 0.85;
+            const poolDisks= pool.ssdQty;
+            poolRows += `<tr class="bg-blue-50/40">
+                <td class="px-6 py-2 font-bold text-left text-[10px] text-blue-700">
+                    Pool ${i+1}: All Flash (${pool.copies}-Copy) — ${pool.ssdQty}×${fmtDisk(pool.ssdSize)} SSD/node [${poolDisks} disks/node]
+                </td>
+                <td class="text-center text-[10px]">${rawSSD.toFixed(1)} TB RAW</td>
+                <td class="usable-cell text-[10px]">${usable.toFixed(2)} TB</td>
+                <td class="usable-cell text-[10px]">${usable.toFixed(2)} TB</td>
+            </tr>`;
+        }
+    });
+
+    // ── Summary Table ──
+    document.getElementById('summaryBody').innerHTML = `
+        <tr class="bg-gray-100"><td class="px-6 py-1.5 font-bold text-left text-[9px] text-gray-400 uppercase tracking-widest" colspan="4">CPU Resources</td></tr>
+        <tr>
+            <td class="px-6 py-3 font-bold text-left">CPU Computing (GHz)</td>
+            <td>${(nodeFreq * nodes).toFixed(2)}</td>
+            <td class="usable-cell">${(uFreqNode * nodes).toFixed(2)}</td>
+            <td class="fail-cell">${(uFreqNode * failNodes).toFixed(2)}</td>
+        </tr>
+        <tr>
+            <td class="px-6 py-3 font-bold text-left">CPU Core (Total/VM)</td>
+            <td>${hw.socket * hw.core * nodes}</td>
+            <td class="usable-cell">${(hw.socket * hw.core - reserved) * nodes}</td>
+            <td class="fail-cell">${(hw.socket * hw.core - reserved) * failNodes}</td>
+        </tr>
+        <tr class="italic">
+            <td class="px-6 py-2 text-left text-gray-500">vCore Limit (1:3)</td>
+            <td>≤${hw.socket * hw.core * nodes * 3}</td>
+            <td class="text-blue-700 font-bold">≤${(hw.socket * hw.core - reserved) * nodes * 3}</td>
+            <td class="text-red-700 font-bold">≤${(hw.socket * hw.core - reserved) * failNodes * 3}</td>
+        </tr>
+        <tr class="italic border-b-2 border-gray-200">
+            <td class="px-6 py-2 text-left text-gray-500">vCore Limit (1:6)</td>
+            <td>≤${hw.socket * hw.core * nodes * 6}</td>
+            <td class="text-blue-700 font-bold">≤${(hw.socket * hw.core - reserved) * nodes * 6}</td>
+            <td class="text-red-700 font-bold">≤${(hw.socket * hw.core - reserved) * failNodes * 6}</td>
+        </tr>
+
+        <tr class="bg-gray-100"><td class="px-6 py-1.5 font-bold text-left text-[9px] text-gray-400 uppercase tracking-widest" colspan="4">Memory Resources</td></tr>
+        <tr>
+            <td class="px-6 py-3 font-bold text-left">
+                RAM Installed (GB)
+                <div class="text-[9px] font-normal text-gray-400 mt-0.5">
+                    ${totalDimm} DIMMs: ${baseCnt}×${baseSz}GB base${expCnt > 0 ? ` + ${expCnt}×${expSz}GB exp.` : ''}
+                </div>
+            </td>
+            <td class="font-bold">${totalRamNode * nodes}</td>
+            <td class="font-bold text-center">${totalRamNode}</td>
+            <td class="text-center text-gray-400">per node</td>
+        </tr>
+        <tr>
+            <td class="px-6 py-2 text-left text-gray-500 italic">
+                System Consume
+                <div class="text-[9px] font-normal text-gray-400">= 21 + disk overhead (Hybrid: 0.5%×SSD_cap + HDD_cnt | Flash: SSD_cnt)</div>
+            </td>
+            <td class="text-center font-semibold text-orange-600">${(sysConsumePerNode * nodes).toFixed(0)}</td>
+            <td class="text-center text-orange-600">${sysConsumePerNode.toFixed(0)}</td>
+            <td class="text-center text-gray-400">per node</td>
+        </tr>
+        <tr class="border-b-2 border-gray-200">
+            <td class="px-6 py-3 font-bold text-left text-green-800">
+                Memory Capacity — VM Usable (GB)
+                <div class="text-[9px] font-normal text-gray-500 mt-0.5">
+                    RAM − System Consume = ${totalRamNode} − ${sysConsumePerNode.toFixed(1)}
+                </div>
+            </td>
+            <td class="font-bold">${totalRamNode * nodes}</td>
+            <td class="usable-cell">
+                ${(usableRamNode * nodes).toFixed(0)}
+                <div class="text-[8px] font-normal text-green-700">${usableRamNode.toFixed(0)}×${nodes} nodes</div>
+            </td>
+            <td class="fail-cell">
+                ${(usableRamNode * failNodes).toFixed(0)}
+                <div class="text-[8px] font-normal text-red-700">${usableRamNode.toFixed(0)}×${failNodes} nodes</div>
+            </td>
+        </tr>
+
+        <tr class="bg-gray-100"><td class="px-6 py-1.5 font-bold text-left text-[9px] text-gray-400 uppercase tracking-widest" colspan="4">Storage Pools</td></tr>
+        ${poolRows}
+        <tr class="bg-blue-50 font-bold">
+            <td class="px-6 py-3 text-left text-blue-800">Cache Usable Total (GB)</td>
+            <td class="text-center text-blue-700">${totalCacheGB}</td>
+            <td class="usable-cell">${totalCacheGB}</td>
+            <td class="fail-cell">${totalCacheFailGB}</td>
+        </tr>
+        <tr class="bg-orange-50 font-bold border-b-2 border-orange-200">
+            <td class="px-6 py-3 text-left text-orange-800">Usable Storage Total (TB)</td>
+            <td class="text-center">${totalRawTB.toFixed(1)}</td>
+            <td class="usable-cell">${totalUsableTB.toFixed(2)}</td>
+            <td class="usable-cell">${totalUsableTB.toFixed(2)}</td>
+        </tr>
+        <tr class="bg-gray-50">
+            <td class="px-6 py-3 font-bold text-left text-gray-400">SSD Cache Ratio (Hybrid pools)</td>
+            <td colspan="3" class="text-right px-6 font-bold ${ratioColor}">
+                ${cacheRatio.toFixed(2)}%
+                <span class="text-[9px] text-gray-400 italic ml-2">(Target ≥ 5%)</span>
+            </td>
+        </tr>
+    `;
+
+    // ── Detail Table ──
+    const mName    = document.getElementById('selModel').value;
+    const dispName = mName === 'custom' ? 'Custom Configuration' : mName;
+
+    let poolDetailRows = '';
+    storagePools.forEach((pool, i) => {
+        const poolDisks = pool.ssdQty + (pool.type === 'hybrid' ? pool.hddQty : 0);
+        const perNode   = pool.type === 'hybrid'
+            ? `${pool.hddQty}× ${fmtDisk(pool.hddSize)} HDD + ${pool.ssdQty}× ${fmtDisk(pool.ssdSize)} SSD`
+            : `${pool.ssdQty}× ${fmtDisk(pool.ssdSize)} SSD`;
+        const clusterRaw = pool.type === 'hybrid'
+            ? `${(pool.hddSize * pool.hddQty * nodes / 1024).toFixed(1)} TB HDD + ${pool.ssdSize * pool.ssdQty * nodes} GB cache`
+            : `${(pool.ssdSize * pool.ssdQty * nodes / 1024).toFixed(1)} TB`;
+        const usableTB = pool.type === 'hybrid'
+            ? ((pool.hddSize * pool.hddQty * nodes / pool.copies) * 0.85 / 1024).toFixed(2) + ' TB'
+            : ((pool.ssdSize * pool.ssdQty * nodes / pool.copies) * 0.85 / 1024).toFixed(2) + ' TB';
+
+        poolDetailRows += `
+        <tr class="bg-orange-50/30">
+            <td class="px-4 py-2 font-bold text-orange-700 text-[10px]">
+                Pool ${i+1} — ${pool.type === 'hybrid' ? 'Hybrid' : 'All Flash'} | ${pool.copies}-Copy | ${poolDisks} disks/node
+            </td>
+            <td class="px-4 py-2 text-[10px]">${perNode}</td>
+            <td class="text-center font-bold text-[10px]">${poolDisks}</td>
+            <td class="text-center font-bold text-blue-700 text-[10px]">${clusterRaw}</td>
+        </tr>
+        <tr>
+            <td class="px-4 py-2 text-gray-400 italic text-[10px]" colspan="2">↳ Usable (${pool.copies}-Copy × 0.85 eff.)</td>
+            <td class="usable-cell text-center text-[10px]" colspan="2">${usableTB}</td>
+        </tr>`;
+    });
+
+    document.getElementById('detailBody').innerHTML = `
+        <tr class="bg-[#1e3a8a] text-white">
+            <td class="px-4 py-3 font-bold" colspan="2">🖥️ Server: ${dispName}</td>
+            <td class="text-center font-bold text-blue-200 text-[10px]">Per Node</td>
+            <td class="text-center font-bold text-blue-200 text-[10px]">Cluster (×${nodes})</td>
+        </tr>
+
+        <tr class="bg-gray-100"><td class="px-4 py-1 text-[9px] font-bold text-gray-400 uppercase" colspan="4">CPU</td></tr>
+        <tr>
+            <td class="px-4 py-2 font-bold">Socket / Cores</td>
+            <td class="px-4 py-2 text-gray-600">${hw.socket}-Socket, ${hw.socket}×${hw.core} cores @ ${hw.freq} GHz</td>
+            <td class="text-center font-bold">${hw.socket * hw.core}</td>
+            <td class="text-center font-bold text-blue-700">${hw.socket * hw.core * nodes}</td>
+        </tr>
+        <tr>
+            <td class="px-4 py-2 font-bold">CPU Frequency</td>
+            <td class="px-4 py-2 text-gray-600">${hw.freq} GHz × 1.2 boost factor</td>
+            <td class="text-center font-bold">${nodeFreq.toFixed(1)} GHz</td>
+            <td class="text-center font-bold text-blue-700">${(nodeFreq * nodes).toFixed(1)} GHz</td>
+        </tr>
+
+        <tr class="bg-gray-100"><td class="px-4 py-1 text-[9px] font-bold text-gray-400 uppercase" colspan="4">Memory</td></tr>
+        <tr>
+            <td class="px-4 py-2 font-bold">Base Config RAM</td>
+            <td class="px-4 py-2 text-gray-600">${baseCnt}× ${baseSz} GB DIMM (base, ${baseCnt}/${maxDimm} slots)</td>
+            <td class="text-center font-bold">${baseRamAmt} GB</td>
+            <td class="text-center font-bold text-blue-700">${baseRamAmt * nodes} GB</td>
+        </tr>
+        ${expCnt > 0 ? `<tr>
+            <td class="px-4 py-2 font-bold">Expansion RAM</td>
+            <td class="px-4 py-2 text-gray-600">${expCnt}× ${expSz} GB DIMM (expansion, ${totalDimm}/${maxDimm} total slots)</td>
+            <td class="text-center font-bold">${expRamAmt} GB</td>
+            <td class="text-center font-bold text-blue-700">${expRamAmt * nodes} GB</td>
+        </tr>` : ''}
+        <tr>
+            <td class="px-4 py-2 font-bold">Total Installed RAM</td>
+            <td class="px-4 py-2 text-gray-600">${totalDimm} DIMMs installed (Max: ${maxDimm} slots)</td>
+            <td class="text-center font-bold">${totalRamNode} GB</td>
+            <td class="text-center font-bold text-blue-700">${totalRamNode * nodes} GB</td>
+        </tr>
+        <tr>
+            <td class="px-4 py-2 font-bold text-orange-700">System Consume</td>
+            <td class="px-4 py-2 text-gray-600">21 + (${totalRamNode} × 5/16) = 21 + ${(totalRamNode*5/16).toFixed(0)} GB</td>
+            <td class="text-center text-orange-600 font-bold">${sysConsumePerNode.toFixed(0)} GB</td>
+            <td class="text-center text-orange-600 font-bold">${(sysConsumePerNode * nodes).toFixed(0)} GB</td>
+        </tr>
+        <tr>
+            <td class="px-4 py-2 font-bold text-orange-500">HW Reserve</td>
+            <td class="px-4 py-2 text-gray-600">BIOS/ECC (fixed per node)</td>
+            <td class="text-center text-orange-400 font-bold">${hwReservePerNode} GB</td>
+            <td class="text-center text-orange-400 font-bold">${(hwReservePerNode * nodes)} GB</td>
+        </tr>
+        <tr>
+            <td class="px-4 py-2 font-bold text-green-700">VM-Usable Memory</td>
+            <td class="px-4 py-2 text-gray-600">RAM − System Consume − HW Reserve</td>
+            <td class="text-center font-bold text-green-600">${usableRamNode.toFixed(0)} GB</td>
+            <td class="text-center font-bold text-green-700">${(usableRamNode * nodes).toFixed(0)} GB</td>
+        </tr>
+
+        <tr class="bg-gray-100"><td class="px-4 py-1 text-[9px] font-bold text-gray-400 uppercase" colspan="4">Chassis</td></tr>
+        <tr>
+            <td class="px-4 py-2 font-bold">Max Disk Bays</td>
+            <td class="px-4 py-2 text-gray-600">${diskOverLimit ? '⚠️ EXCEEDED — ' : ''}Configured: ${totalDisksPerNode} / ${hw.maxDisk} bays</td>
+            <td class="text-center font-bold ${diskOverLimit ? 'text-red-600' : 'text-gray-700'}">${hw.maxDisk} bays</td>
+            <td class="text-center text-gray-400">–</td>
+        </tr>
+        <tr>
+            <td class="px-4 py-2 font-bold">Max DIMM Slots</td>
+            <td class="px-4 py-2 text-gray-600">Physical capacity of this platform</td>
+            <td class="text-center font-bold">${maxDimm} slots</td>
+            <td class="text-center text-gray-400">–</td>
+        </tr>
+
+        <tr class="bg-gray-100"><td class="px-4 py-1 text-[9px] font-bold text-gray-400 uppercase" colspan="4">Storage Pool Configuration</td></tr>
+        ${poolDetailRows}
+
+        <tr class="bg-blue-900 text-white font-bold">
+            <td class="px-4 py-2" colspan="2">Total Usable Storage</td>
+            <td class="text-center">${totalUsableTB.toFixed(2)} TB</td>
+            <td class="text-center text-green-300">${totalUsableTB.toFixed(2)} TB</td>
+        </tr>
+    `;
+}
+
+// ─── Model Change ──────────────────────────────────────────────────────────────
+
+function handleModelChange() {
+    const hw       = getCurrentHW();
+    const isCustom = document.getElementById('selModel').value === 'custom';
+    document.getElementById('manualArea').classList.toggle('hidden', !isCustom);
+
+    // Auto-suggest base DIMM config matching the model's base RAM
+    const suggestSz  = 32;
+    const suggestCnt = Math.max(1, Math.min(
+        Math.round(hw.baseRam / suggestSz),
+        hw.maxDimm || 32
+    ));
+    document.getElementById('selBaseDimmSize').value   = suggestSz;
+    document.getElementById('inpBaseDimmCount').value  = suggestCnt;
+    document.getElementById('selExpDimmSize').value    = 32;
+
+    updateRamOptions();
+}
+
+// ─── Admin ─────────────────────────────────────────────────────────────────────
+
+function refreshUI() {
+    document.getElementById('selModel').innerHTML =
+        db.servers.map(s => `<option value="${s.name}">${s.name}</option>`).join('') +
+        `<option value="custom">✨ Customization Mode</option>`;
+
+    const sTable = document.getElementById('adminServerTable');
+    sTable.innerHTML = `<tr class="bg-gray-100 text-[9px] font-bold uppercase text-left">
+        <th class="px-3 py-3">Platform</th><th class="px-3 py-3 text-center">Soc</th>
+        <th class="px-3 py-3 text-center">Cores</th><th class="px-3 py-3 text-center">GHz</th>
+        <th class="px-3 py-3 text-center">Base RAM</th><th class="px-3 py-3 text-center">Max Disk</th>
+        <th class="px-3 py-3 text-center">Max DIMM</th><th class="px-3 py-3"></th>
+    </tr>`;
+    db.servers.forEach((s, i) => {
+        sTable.innerHTML += `<tr class="border-t hover:bg-blue-50 text-xs">
+            <td class="px-3 py-2 font-bold text-gray-700">${s.name}</td>
+            <td class="text-center">${s.socket}</td><td class="text-center">${s.core}</td>
+            <td class="text-center">${s.freq}</td>
+            <td class="text-center font-semibold text-blue-600">${s.baseRam} GB</td>
+            <td class="text-center font-bold text-orange-600">${s.maxDisk}</td>
+            <td class="text-center font-bold text-purple-600">${s.maxDimm || '–'}</td>
+            <td class="text-right px-3"><button onclick="deleteItem('servers',${i})" class="text-red-400 hover:text-red-600 font-bold">✕</button></td>
+        </tr>`;
+    });
+
+    const cPanel = document.getElementById('adminCompPanel');
+    cPanel.innerHTML = '';
+    [['ssds', 'SSD Options'], ['hdds', 'HDD Options']].forEach(([key, label]) => {
+        cPanel.innerHTML += `<div class="bg-white rounded-xl border p-4 shadow-sm text-[10px]">
+            <div class="flex justify-between items-center font-bold text-gray-400 uppercase mb-3">
+                <span>${label}</span>
+                <button onclick="openModal('${key}')" class="text-blue-600 font-bold hover:underline">+ ADD</button>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                ${db[key].map((v, i) => `<span class="bg-gray-100 border p-1 px-2 rounded-lg font-bold flex items-center gap-1">
+                    ${fmtDisk(v)}
+                    <button onclick="deleteItem('${key}',${i})" class="text-red-300 hover:text-red-500">✕</button>
+                </span>`).join('')}
+            </div>
+        </div>`;
+    });
+
+    handleModelChange();
+    if (storagePools.length === 0) addPool();
+    else renderPools();
+}
+
+function openModal(t) {
+    currentType = t;
+    const b = document.getElementById('modalBody');
+    if (t === 'server') {
+        document.getElementById('modalTitle').innerText = 'Add Server Model';
+        b.innerHTML = `
+        <input type="text" id="a_name" placeholder="Model Name" class="w-full border p-3 rounded-xl bg-gray-50">
+        <div class="grid grid-cols-3 gap-2">
+            <div class="text-[10px]">Sockets<input type="number" id="a_soc" value="2" class="w-full border p-2 rounded-xl mt-1"></div>
+            <div class="text-[10px]">Cores/Socket<input type="number" id="a_core" value="16" class="w-full border p-2 rounded-xl mt-1"></div>
+            <div class="text-[10px]">Base GHz<input type="number" id="a_freq" step="0.1" value="2.8" class="w-full border p-2 rounded-xl mt-1"></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+            <div class="text-[10px]">Base RAM (GB)<input type="number" id="a_base" value="128" class="w-full border p-2 rounded-xl mt-1"></div>
+            <div class="text-[10px]">Max Disk Slots<input type="number" id="a_max" value="12" class="w-full border p-2 rounded-xl mt-1"></div>
+            <div class="text-[10px]">Max DIMM Slots<input type="number" id="a_maxdimm" value="24" class="w-full border p-2 rounded-xl mt-1"></div>
+        </div>`;
+    } else {
+        document.getElementById('modalTitle').innerText = 'Add Disk Size';
+        b.innerHTML = `<input type="number" id="a_val" placeholder="Size in GB (e.g. 7680)" class="w-full border p-4 rounded-2xl bg-gray-50 text-center font-bold text-xl">
+        <p class="text-[10px] text-gray-400 text-center">Enter in GB (1000 GB = 1 TB)</p>`;
+    }
+    document.getElementById('adminModal').classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('adminModal').classList.add('hidden'); }
+
+function saveAdminItem() {
+    if (currentType === 'server') {
+        db.servers.push({
+            name:    document.getElementById('a_name').value || 'New Server',
+            socket:  parseInt(document.getElementById('a_soc').value)    || 2,
+            core:    parseInt(document.getElementById('a_core').value)   || 16,
+            freq:    parseFloat(document.getElementById('a_freq').value) || 2.4,
+            baseRam: parseInt(document.getElementById('a_base').value)   || 128,
+            maxDisk: parseInt(document.getElementById('a_max').value)    || 12,
+            maxDimm: parseInt(document.getElementById('a_maxdimm').value)|| 24
+        });
+    } else {
+        const v = Number(document.getElementById('a_val').value);
+        if (v > 0) { db[currentType].push(v); db[currentType].sort((a, b) => a - b); }
+    }
+    saveToServer(); closeModal();
+}
+
+function deleteItem(t, i) {
+    if (confirm('Remove this item and sync to server?')) { db[t].splice(i, 1); saveToServer(); }
+}
+
+async function saveToServer() {
+    try {
+        const r = await fetch(window.location.href, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(db)
+        });
+        if (r.ok) { alert('✓ Changes saved to server.'); refreshUI(); }
+    } catch (e) { alert('❌ Failed to sync with server.'); }
+}
+
+// ─── Auth / Nav ────────────────────────────────────────────────────────────────
+
+function checkAdminAuth() {
+    if (sessionStorage.getItem('is_admin') === 'true') switchTab('admin');
+    else document.getElementById('loginModal').classList.remove('hidden');
+}
+function doLogin() {
+    if (document.getElementById('user').value === 'admin' && document.getElementById('pass').value === 'admin123') {
+        sessionStorage.setItem('is_admin', 'true');
+        document.getElementById('loginModal').classList.add('hidden');
+        switchTab('admin');
+    } else alert('Invalid credentials.');
+}
+function switchTab(t) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById(`content-${t}`).classList.add('active');
+    if (t === 'sizing') renderPools(); else refreshUI();
+}
+function exportPDF() {
+    html2pdf().set({ margin: 0.3, filename: 'Sangfor_HCI_Sizing.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4' } })
+        .from(document.getElementById('pdf-area')).save();
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────────
+refreshUI();
+</script>
+</body>
+</html>

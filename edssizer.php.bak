@@ -1,0 +1,256 @@
+<?php
+$jsonPath = 'Inventory-EDS.json';
+$inv = json_decode(file_get_contents($jsonPath), true);
+?>
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>SANGFOR aStor EDS Sizer v5.8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .card-pro { background: white; border-radius: 28px; border: 1px solid #e2e8f0; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .input-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: block; }
+        .eds-input { width: 100%; border: 2px solid #f1f5f9; border-radius: 12px; padding: 12px; font-weight: 600; outline: none; transition: all 0.2s; }
+        .eds-input:focus { border-color: #2563eb; background: #f0f7ff; }
+        .alert-ram { background: #fff7ed; border: 1px solid #ffedd5; color: #9a3412; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+<div class="max-w-7xl mx-auto" id="sizing-report">
+    <div class="flex justify-between items-start mb-10">
+        <div>
+            <h1 class="text-4xl font-black text-slate-800 tracking-tighter italic ">aStor EDS <span class="text-blue-600 text-3xl">Sizer </span></h1>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-1">Presale Sizer Tools</p>
+        </div>
+        <div class="flex gap-2 no-print">
+            <button onclick="window.print()" class="bg-slate-800 text-white px-6 py-2 rounded-xl font-bold shadow-lg">Print / PDF</button>
+            <button onclick="window.history.back()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg">Back</button>
+        </div>
+    </div>
+
+    <div class="card-pro mb-8 border-t-8 border-t-slate-800">
+        <h2 class="text-xl font-black text-slate-800 uppercase mb-8 flex items-center gap-3">
+            <span class="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center font-bold">01</span> 
+            Hardware & Memory Configuration
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <span class="input-label">Server Chassis</span>
+                <select id="model" class="eds-input" onchange="runSizing()">
+                    <?php foreach($inv['eds_servers'] as $s): ?>
+                        <option value="<?= $s['slots'] ?>" data-u2="<?= $s['u2_max'] ?>" data-base="<?= $s['ram_base'] ?>"><?= $s['model'] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <span class="input-label">Node Count</span>
+                <input type="number" id="nodes" class="eds-input" value="3" min="2" oninput="runSizing()">
+            </div>
+            <div>
+                <span class="input-label">Additional RAM (DIMM 32GB)</span>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="addRamDimm" class="eds-input" value="0" min="0" oninput="runSizing()">
+                    <span class="text-xs font-bold text-slate-400">DIMMs</span>
+                </div>
+                <div id="ramAlert" class="mt-2 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="card-pro border-t-8 border-t-blue-600">
+            <h3 class="font-black text-blue-600 mb-6 uppercase flex justify-between items-center text-lg">Pool A: File / Object <span>📂</span></h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <span class="input-label">Data Disk Size (TB)</span>
+                    <select id="sizeFile" class="eds-input" onchange="runSizing()">
+                        <?php foreach($inv['disk_options']['hdd'] as $d): ?>
+                            <option value="<?= $d ?>"><?= $d ?> TB HDD</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <span class="input-label">HDD Qty / Node</span>
+                    <input type="number" id="qtyFile" class="eds-input" value="6" oninput="runSizing()">
+                </div>
+            </div>
+            <div class="pt-6 border-t border-slate-100 grid grid-cols-3 gap-4">
+                <div class="col-span-1">
+                    <span class="input-label">Cache Type</span>
+                    <select id="cacheTypeFile" class="eds-input !text-[10px]" onchange="runSizing()">
+                        <option value="nvme_ssd">NVMe</option>
+                        <option value="sata_ssd">SATA</option>
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <span class="input-label">Cache Selection</span>
+                    <select id="cacheSizeFile" class="eds-input !text-[10px]" onchange="runSizing()">
+                        <?php foreach($inv['disk_options']['nvme_ssd'] as $s): ?>
+                            <option value="<?= $s ?>"><?= $s ?> TB Cache SSD</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="input-label">Policy</span>
+                <select id="policyFile" class="eds-input" onchange="runSizing()">
+                    <?php foreach($inv['policies']['file_object'] as $p): ?>
+                        <option value="<?= $p['efficiency'] ?>"><?= $p['name'] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="card-pro border-t-8 border-t-orange-500">
+            <h3 class="font-black text-orange-600 mb-6 uppercase flex justify-between items-center text-lg">Pool B: Block Storage <span>📦</span></h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <span class="input-label">Data Disk Size (TB)</span>
+                    <select id="sizeBlock" class="eds-input" onchange="runSizing()">
+                        <?php foreach($inv['disk_options']['hdd'] as $d): ?>
+                            <option value="<?= $d ?>"><?= $d ?> TB HDD</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <span class="input-label">HDD Qty / Node</span>
+                    <input type="number" id="qtyBlock" class="eds-input" value="4" oninput="runSizing()">
+                </div>
+            </div>
+            <div class="pt-6 border-t border-slate-100 grid grid-cols-3 gap-4">
+                <div class="col-span-1">
+                    <span class="input-label">Cache Type</span>
+                    <select id="cacheTypeBlock" class="eds-input !text-[10px]" onchange="runSizing()">
+                        <option value="nvme_ssd">NVMe</option>
+                        <option value="sata_ssd">SATA</option>
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <span class="input-label">Cache Selection</span>
+                    <select id="cacheSizeBlock" class="eds-input !text-[10px]" onchange="runSizing()">
+                        <?php foreach($inv['disk_options']['nvme_ssd'] as $s): ?>
+                            <option value="<?= $s ?>"><?= $s ?> TB Cache SSD</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="input-label">Policy</span>
+                <select id="policyBlock" class="eds-input" onchange="runSizing()">
+                    <?php foreach($inv['policies']['block'] as $p): ?>
+                        <option value="<?= $p['efficiency'] ?>"><?= $p['name'] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
+            
+            <div class="space-y-6 border-r border-white/5 pr-6">
+                <p class="text-[11px] font-black text-blue-400 uppercase tracking-widest border-b border-white/5 pb-2">Hardware Summary</p>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">Total Nodes:</span><span class="text-lg font-black" id="sumNodes">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">Total Slots:</span><span class="text-lg font-black" id="sumSlots">- / -</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">Memory/Node:</span><span class="text-lg font-black text-emerald-400" id="sumRam">-</span></div>
+            </div>
+
+            <div class="space-y-6 border-r border-white/5 pr-6">
+                <p class="text-[11px] font-black text-blue-400 uppercase tracking-widest border-b border-white/5 pb-2">Accessories BOM</p>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">10G Modules:</span><span class="text-lg font-black" id="sumModules">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">LC-LC Fibers:</span><span class="text-lg font-black" id="sumCables">-</span></div>
+            </div>
+
+            <div class="space-y-6 border-r border-white/5 pr-6">
+                <p class="text-[11px] font-black text-blue-400 uppercase tracking-widest border-b border-white/5 pb-2">Pool Capacities (Net)</p>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">File/Object:</span><span class="text-lg font-black text-blue-400" id="sumFileUsable">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-400 italic">Block Pool:</span><span class="text-lg font-black text-orange-400" id="sumBlockUsable">-</span></div>
+            </div>
+
+            <div class="flex flex-col justify-center text-center md:text-right">
+                <p class="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em] mb-2">Total Net Usable (TB)</p>
+                <p class="text-7xl font-black tracking-tighter text-white" id="resUsable">0.0</p>
+                <p class="text-[9px] text-slate-500 mt-4 leading-relaxed italic">* Incl. Binary Loss (931/1024)<br>and 15% Emergency Reservation.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function runSizing() {
+        const modelEl = document.getElementById('model');
+        const maxSlots = parseInt(modelEl.value);
+        const nodes = parseInt(document.getElementById('nodes').value) || 0;
+        const ramBase = parseInt(modelEl.options[modelEl.selectedIndex].getAttribute('data-base'));
+        const addRamDimm = parseInt(document.getElementById('addRamDimm').value) || 0;
+        
+        // 1. RAM Logic
+        const ramBaseDimms = ramBase / 16; // Assuming 16GB base modules for calculation or specific chassis config
+        const totalRamSlots = ramBaseDimms + addRamDimm; 
+        const allowedDimms = [2, 4, 8, 12, 16, 24, 32];
+        const ramAlert = document.getElementById('ramAlert');
+        
+        // RAM Display
+        const totalRamGB = ramBase + (addRamDimm * 32);
+        document.getElementById('sumRam').innerText = totalRamGB + " GB";
+
+        if (!allowedDimms.includes(totalRamSlots) && addRamDimm > 0) {
+            const next = allowedDimms.find(s => s > totalRamSlots) || 32;
+            ramAlert.innerHTML = `⚠ RAM Channel Mismatch. Suggest ${next} total DIMMs.`;
+            ramAlert.className = "alert-ram block";
+            ramAlert.classList.remove('hidden');
+        } else {
+            ramAlert.classList.add('hidden');
+        }
+
+        // 2. Pool A: File (EC)
+        const qFile = parseInt(document.getElementById('qtyFile').value) || 0;
+        const sFile = parseFloat(document.getElementById('sizeFile').value);
+        const eFile = parseFloat(document.getElementById('policyFile').value);
+        const fileSafety = 0.90;
+
+        // 3. Pool B: Block (Replica)
+        const qBlock = parseInt(document.getElementById('qtyBlock').value) || 0;
+        const sBlock = parseFloat(document.getElementById('sizeBlock').value);
+        const eBlock = parseFloat(document.getElementById('policyBlock').value);
+        const blockSafety = 0.85;
+
+        // 4. Constants
+        const binaryLoss = 931/1024;
+        const emergencyBuffer = 0.85;
+
+        // Calculations
+        const fileUsable = (qFile * nodes * sFile) * binaryLoss * eFile * fileSafety;
+        const blockUsable = (qBlock * nodes * sBlock) * binaryLoss * eBlock * blockSafety;
+        const totalNet = (fileUsable + blockUsable) * emergencyBuffer;
+
+        // UI Summary Updates
+        document.getElementById('sumNodes').innerText = nodes + " Nodes";
+        const totalDisks = qFile + qBlock + 4; // Assuming 2 cache disks per pool as baseline
+        document.getElementById('sumSlots').innerText = `${totalDisks} / ${maxSlots}`;
+        
+        document.getElementById('sumModules').innerText = (nodes * 8) + 4;
+        document.getElementById('sumCables').innerText = (nodes * 4) + 2;
+
+        document.getElementById('sumFileUsable').innerText = fileUsable.toFixed(1) + " TB";
+        document.getElementById('sumBlockUsable').innerText = blockUsable.toFixed(1) + " TB";
+        document.getElementById('resUsable').innerText = totalNet.toFixed(1);
+
+        // Ratio Check
+        const fileRatio = (2 * 1.92) / (qFile * sFile);
+        const resRatio = (fileRatio * 100).toFixed(1) + "%";
+        document.getElementById('resRatio').innerText = resRatio;
+        document.getElementById('resRatio').style.color = fileRatio >= 0.05 ? "#34d399" : "#f87171";
+    }
+
+    window.onload = runSizing;
+</script>
+
+</body>
+</html>

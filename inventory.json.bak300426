@@ -1,0 +1,127 @@
+{
+  "servers": [
+    {
+      "name": "aServer-X5-1200",
+      "socket": 2,
+      "core": 16,
+      "freq": 2.8,
+      "baseRam": 128,
+      "maxDisk": 7
+    },
+    {
+      "name": "aServer-X5-2105",
+      "socket": 2,
+      "core": 12,
+      "freq": 2.4,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X5-2205",
+      "socket": 2,
+      "core": 16,
+      "freq": 2.8,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X5-2305P",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.1,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X5-2305P(12N)",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.1,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X5-2405",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.8,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X5-G2200",
+      "socket": 2,
+      "core": 16,
+      "freq": 2.8,
+      "baseRam": 128,
+      "maxDisk": 10
+    },
+    {
+      "name": "aServer-Z4-2605",
+      "socket": 2,
+      "core": 64,
+      "freq": 3.1,
+      "baseRam": 256,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X6-2205",
+      "socket": 2,
+      "core": 16,
+      "freq": 3.2,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "aServer-X6-2305P",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.3,
+      "baseRam": 128,
+      "maxDisk": 12
+    },
+    {
+      "name": "VDS-X6-2205",
+      "socket": 2,
+      "core": 16,
+      "freq": 3.2,
+      "baseRam": 256,
+      "maxDisk": 12
+    },
+    {
+      "name": "R770(6507P)",
+      "socket": 2,
+      "core": 8,
+      "freq": 3.5,
+      "baseRam": 256,
+      "maxDisk": 8
+    },
+    {
+      "name": "R770(6520P)",
+      "socket": 2,
+      "core": 24,
+      "freq": 2.4,
+      "baseRam": 256,
+      "maxDisk": 8
+    },
+    {
+      "name": "R770(6530P)",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.3,
+      "baseRam": 256,
+      "maxDisk": 24
+    },
+    {
+      "name": "R770(6740P)",
+      "socket": 2,
+      "core": 48,
+      "freq": 2.1,
+      "baseRam": 256,
+      "maxDisk": 24
+    }
+  ],
+  "rams": [0, 64, 128, 256, 384, 640, 896, 1920],
+  "ssds": [480, 960, 1900, 3800, 7600],
+  "hdds": [960, 1900, 3200, 3800, 7600, 4000, 6000, 8000, 10000, 12000]
+}

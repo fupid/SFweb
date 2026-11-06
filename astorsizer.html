@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aStor EDS Sizer — Hybrid Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ── Inventory data — synced from eds-inventory.json ── */
+const inventoryData = {
+  "models": {
+    "aStor-EDS1150-W": {
+      "cpu": "1x Intel Xeon 4310 2.1G 12C24T",
+      "ram": "64GB",
+      "pci": "2*1GE + 2*10GE",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 11,
+      "defaultDimms": 2,
+      "supportedDimms": [2, 4, 6, 8, 12, 16]
+    },
+    "aStor-EDS1210-W": {
+      "cpu": "1x Intel Xeon 4310 2.1G 12C24T",
+      "ram": "64GB",
+      "pci": "2*1GE + 4*10GE",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 12,
+      "defaultDimms": 2,
+      "supportedDimms": [2, 4, 6, 8, 12, 16]
+    },
+    "aStor-EDS3650-W": {
+      "cpu": "2x Intel Xeon 4310 2.1G 12C24T",
+      "ram": "128GB",
+      "pci": "2*1GE + 2*10GE",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 36,
+      "defaultDimms": 4,
+      "supportedDimms": [2, 4, 8, 12, 16, 24, 32]
+    },
+    "aStor-EDS-F6000T": {
+      "cpu": "2x Intel Xeon Gold 5512U 2.1 GHz",
+      "ram": "256GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 24,
+      "defaultDimms": 8,
+      "supportedDimms": [8, 12, 16]
+    },
+    "aStor-EDS-F6000Q": {
+      "cpu": "2x Intel Xeon Gold 5512U 2.1 GHz",
+      "ram": "256GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 24,
+      "defaultDimms": 8,
+      "supportedDimms": [8, 12, 16]
+    },
+    "aStor-EDS-F3000T": {
+      "cpu": "2x Intel Xeon Silver 4510 2.4 GHz",
+      "ram": "128GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 24,
+      "defaultDimms": 4,
+      "supportedDimms": [4, 8, 12, 16]
+    },
+    "aStor-EDS-F3000Q": {
+      "cpu": "2x Intel Xeon Silver 4510 2.4 GHz",
+      "ram": "128GB",
+      "pci": "4*1GE + 8*PCI-E Slots",
+      "minNodes": 3, "maxNodes": 64, "diskSlots": 24,
+      "defaultDimms": 4,
+      "supportedDimms": [4, 8, 12, 16]
+    }
+  },
+  "hardware": {
+    "hdd_sizes": [4, 8, 10, 12, 16],
+    "cache_sizes": [0.96, 1.92, 3.84, 7.68],
+    "nvme_all_flash_sizes": [3.84, 7.68, 15.36, 30.72],
+    "dimm_size_gb": 32
+  }
+};
+</script>
+<style>
+:root {
+    --bg: #f3f4f7;
+    --surface: #ffffff;
+    --surface-2: #f7f8fb;
+    --ink: #0b1220;
+    --ink-2: #2c3344;
+    --muted: #6b7280;
+    --line: #e4e7ed;
+    --line-strong: #d3d8e0;
+
+    --indigo: #4f46e5;
+    --indigo-soft: #eef0ff;
+    --indigo-ink: #312e81;
+
+    --amber: #d97706;
+    --amber-soft: #fff4e0;
+    --amber-ink: #7c2d12;
+
+    --dark: #0f172a;
+    --green: #16a34a;
+    --red: #dc2626;
+    --radius: 10px;
+    --radius-lg: 14px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    padding: 28px 24px 60px;
+}
+.mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+
+.shell {
+    max-width: 1320px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.18);
+}
+
+/* Header */
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px 0; gap: 24px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #fff; display: grid; place-items: center;
+    font-weight: 700; font-size: 16px;
+}
+.brand-mark span { background: linear-gradient(135deg, #818cf8, #c4b5fd); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand-title h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.brand-title .crumb { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 2px; }
+
+.actions { display: flex; gap: 10px; align-items: center; }
+.btn { font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease; display: inline-flex; align-items: center; gap: 8px; line-height: 1; }
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: #000; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--ink-2); border-color: var(--line-strong); }
+.btn-ghost:hover { background: var(--surface-2); }
+.btn svg { width: 14px; height: 14px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; padding: 20px 28px 0; border-bottom: 1px solid var(--line); margin-top: 18px; }
+.tab { position: relative; padding: 12px 18px 14px; font-size: 13.5px; font-weight: 500; color: var(--muted); text-decoration: none; border-radius: 8px 8px 0 0; display: inline-flex; align-items: center; gap: 10px; transition: color 0.15s ease, background 0.15s ease; cursor: pointer; }
+.tab:hover { color: var(--ink); background: var(--surface-2); }
+.tab .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+.tab.active { color: var(--ink); font-weight: 600; }
+.tab.active::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; background: var(--ink); border-radius: 2px; }
+.tab.active .dot { background: var(--indigo); }
+.tab.external .ext-icon { width: 12px; height: 12px; opacity: 0.55; }
+.tab .badge { font-size: 10px; font-weight: 600; background: var(--surface-2); color: var(--muted); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); letter-spacing: 0.04em; text-transform: uppercase; }
+.tab.active .badge { background: #eef0ff; color: var(--indigo-ink); border-color: #d8dcff; }
+
+/* Body */
+.body { padding: 24px 28px 28px; }
+.section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px 20px; margin-bottom: 18px; }
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.section-num { width: 22px; height: 22px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 600; display: grid; place-items: center; font-family: 'IBM Plex Mono', monospace; }
+.section-title { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+.section-sub { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+/* Fields */
+.field-grid { display: grid; grid-template-columns: 1.1fr 1.3fr 0.9fr 1.3fr 1.4fr; gap: 16px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.field-control { width: 100%; padding: 9px 12px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; font-family: inherit; font-size: 13.5px; color: var(--ink); transition: border 0.15s ease, box-shadow 0.15s ease; appearance: none; -webkit-appearance: none; }
+.field-control:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08); }
+select.field-control { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.field-readonly { background: var(--surface-2); border-color: var(--line); font-weight: 600; color: var(--ink-2); }
+.warning { font-size: 11px; color: var(--red); font-weight: 500; margin-top: 2px; }
+.spec-card { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--ink-2); line-height: 1.6; }
+.spec-card .row { display: flex; gap: 6px; }
+.spec-card .row strong { color: var(--ink); font-weight: 600; min-width: 38px; }
+
+/* Pools grid */
+.pool-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.pool-col-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 0 2px; }
+.pool-col-head .pill { font-size: 10.5px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.08em; text-transform: uppercase; }
+.pool-col-head.col-file .pill { background: var(--indigo-soft); color: var(--indigo-ink); }
+.pool-col-head.col-block .pill { background: var(--amber-soft); color: var(--amber-ink); }
+.pool-col-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.pool-col-head .desc { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+
+.pool-stack { display: flex; flex-direction: column; gap: 12px; }
+
+.pool { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; transition: opacity 0.2s ease; }
+.pool.pool-file { border-top: 2px solid var(--indigo); }
+.pool.pool-block { border-top: 2px solid var(--amber); }
+.pool.disabled { opacity: 0.45; }
+.pool.disabled .pool-body { display: none; }
+
+.pool-head { display: flex; align-items: center; gap: 10px; padding: 11px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); cursor: pointer; user-select: none; }
+.pool.disabled .pool-head { border-bottom: none; }
+.pool-check { width: 16px; height: 16px; cursor: pointer; margin: 0; }
+.pool-file .pool-check { accent-color: var(--indigo); }
+.pool-block .pool-check { accent-color: var(--amber); }
+.pool-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; }
+.pool-file .pool-tag { background: var(--indigo-soft); color: var(--indigo-ink); }
+.pool-block .pool-tag { background: var(--amber-soft); color: var(--amber-ink); }
+.pool-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.pool-summary { margin-left: auto; font-size: 11.5px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+
+.pool-body { padding: 14px 16px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pool-body .full { grid-column: 1 / -1; }
+
+/* SSD mode segmented toggle */
+.seg { display: flex; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg label { flex: 1; position: relative; cursor: pointer; }
+.seg label input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label span { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; font-size: 12.5px; font-weight: 500; color: var(--muted); border-radius: 6px; transition: all 0.15s ease; }
+.seg label input:checked + span { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(15,23,42,0.08); }
+.pool-file .seg label input:checked + span { color: var(--indigo); }
+.pool-block .seg label input:checked + span { color: var(--amber); }
+.seg-mini { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+
+/* Results */
+.results { background: var(--dark); color: #e2e8f0; border-radius: var(--radius); padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 18px; }
+.result-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 16px 18px; }
+.result-card.r-file { border-left: 3px solid var(--indigo); }
+.result-card.r-block { border-left: 3px solid var(--amber); }
+.result-card.r-total { background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255, 255, 255, 0.1); }
+.result-title { font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #94a3b8; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.r-file .result-title { color: #a5b4fc; }
+.r-block .result-title { color: #fbbf24; }
+.r-total .result-title { color: #cbd5e1; justify-content: center; }
+.result-title .pool-count { font-size: 10px; color: #64748b; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.05em; }
+.kv { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; font-size: 13px; }
+.kv .k { color: #94a3b8; }
+.kv .v { color: #f1f5f9; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+.kv .v.accent-green { color: #4ade80; }
+.kv .v.accent-yellow { color: #fbbf24; }
+.result-net { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: baseline; }
+.result-net .label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.r-file .result-net .label { color: #a5b4fc; }
+.r-block .result-net .label { color: #fbbf24; }
+.result-net .value { font-size: 20px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+.r-file .result-net .value { color: #818cf8; }
+.r-block .result-net .value { color: #f59e0b; }
+.r-total .big-number { text-align: center; margin: 8px 0 14px; }
+.r-total .big-number .num { font-family: 'IBM Plex Mono', monospace; font-size: 56px; font-weight: 600; color: #fff; line-height: 1; letter-spacing: -0.02em; }
+.r-total .big-number .unit { font-size: 14px; color: #94a3b8; margin-left: 6px; font-weight: 500; }
+.r-total .footer-meta { border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; }
+
+.notice { margin-top: 16px; padding: 11px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 12px; color: #78350f; display: flex; gap: 10px; align-items: flex-start; }
+.notice svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; }
+.notice strong { font-weight: 600; }
+
+
+.pdf-hide { display: none !important; }
+
+@media (max-width: 1100px) {
+    .field-grid { grid-template-columns: 1fr 1fr; }
+    .pool-columns { grid-template-columns: 1fr; }
+    .results { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="sizer-app" class="shell">
+
+    <div class="app-header">
+        <div class="brand">
+            <div class="brand-mark"><span>a</span></div>
+            <div class="brand-title">
+                <h1>aStor EDS Sizer</h1>
+                <div class="crumb">Presale Sizer Tools</div>
+            </div>
+        </div>
+        <div class="actions" data-html2canvas-ignore="true">
+            <a href="index.html" class="btn btn-ghost" style="text-decoration:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Menu
+            </a>
+            <button class="btn btn-ghost" onclick="exportPDF()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg>
+                Print / PDF
+            </button>
+            <button class="btn btn-primary" onclick="calculate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                Calculate
+            </button>
+        </div>
+    </div>
+
+    <nav class="tabs" role="tablist" data-html2canvas-ignore="true">
+        <a class="tab active" role="tab" aria-current="page">
+            <span class="dot"></span>
+            Hybrid Model
+            <span class="badge">Current</span>
+        </a>
+        <a class="tab external" href="https://cheneyhu1990-wq.github.io/astor-all-flash-sizing-tool/" target="_blank" rel="noopener" role="tab">
+            <span class="dot"></span>
+            All Flash Model
+            <svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="tab external" href="https://cheneyhu1990-wq.github.io/astor-all-flash-sizing-tool/performance.html" id="iopsLink" target="_blank" rel="noopener" role="tab">
+            <span class="dot"></span>
+            IOPS Performance Calculator
+            <svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+    </nav>
+
+    <div class="body">
+
+        <!-- 01 HARDWARE -->
+        <div class="section">
+            <div class="section-head">
+                <span class="section-num">01</span>
+                <span class="section-title">Hardware &amp; Node Configuration</span>
+                <span class="section-sub">Hybrid Flash architecture — HDD primary, SSD/NVMe as cache or data</span>
+            </div>
+            <div class="field-grid">
+                <div class="field">
+                    <label class="field-label">Architecture</label>
+                    <div class="field-control field-readonly" style="display:flex;align-items:center;gap:8px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg>
+                        Hybrid Flash
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label">Server Model</label>
+                    <select id="serverModel" class="field-control" onchange="onModelChange()"></select>
+                </div>
+                <div class="field">
+                    <label class="field-label">Total Node Count</label>
+                    <input type="number" id="globalNodes" value="3" class="field-control" oninput="calculate()">
+                    <p id="nodeWarning" class="warning" style="display:none;">Node count is out of range</p>
+                </div>
+                <div class="field">
+                    <label class="field-label">Memory (RAM) / Node</label>
+                    <select id="nodeRam" class="field-control" onchange="calculate()"></select>
+                </div>
+                <div class="field">
+                    <label class="field-label">&nbsp;</label>
+                    <div class="spec-card">
+                        <div class="row"><strong>Limit</strong> Min <span id="lblMinNode" class="mono">—</span> / Max <span id="lblMaxNode" class="mono">—</span> Nodes</div>
+                        <div class="row"><strong>CPU</strong> <span id="lblCpu">—</span></div>
+                        <div class="row"><strong>PCI</strong> <span id="lblPci">—</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 02 POOLS -->
+        <div class="section">
+            <div class="section-head">
+                <span class="section-num">02</span>
+                <span class="section-title">Storage Pool Configuration</span>
+                <span class="section-sub">Up to 3 pools per service — enable only what you need</span>
+            </div>
+            <div class="pool-columns">
+                <div>
+                    <div class="pool-col-head col-file">
+                        <span class="pill">File / Object</span>
+                        <h3>Erasure-coded pools</h3>
+                        <span class="desc">Up to 3</span>
+                    </div>
+                    <div class="pool-stack" id="filePoolStack"></div>
+                </div>
+                <div>
+                    <div class="pool-col-head col-block">
+                        <span class="pill">Block</span>
+                        <h3>Replicated pools</h3>
+                        <span class="desc">Up to 3</span>
+                    </div>
+                    <div class="pool-stack" id="blockPoolStack"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results">
+            <div class="result-card r-file">
+                <div class="result-title">
+                    <span>File &amp; Object</span>
+                    <span class="pool-count" id="fileCount">0 pools</span>
+                </div>
+                <div class="kv"><span class="k">Total HDDs</span><span class="v" id="sumFileHdd">0</span></div>
+                <div class="kv"><span class="k">Total SSD/NVMe</span><span class="v" id="sumFileSsd">0</span></div>
+                <div class="kv"><span class="k">Raw Cap (HDD+SSD)</span><span class="v" id="sumFileRaw">0.0 TB</span></div>
+                <div class="kv"><span class="k">Cache Ratio</span><span class="v accent-green" id="sumFileRatio">0.00%</span></div>
+                <div class="result-net">
+                    <span class="label">Net Usable</span>
+                    <span class="value" id="sumFileUsable">0.0 TB</span>
+                </div>
+            </div>
+
+            <div class="result-card r-block">
+                <div class="result-title">
+                    <span>Block Storage</span>
+                    <span class="pool-count" id="blockCount">0 pools</span>
+                </div>
+                <div class="kv"><span class="k">Total HDDs</span><span class="v" id="sumBlockHdd">0</span></div>
+                <div class="kv"><span class="k">Total SSD/NVMe</span><span class="v" id="sumBlockSsd">0</span></div>
+                <div class="kv"><span class="k">Raw Cap (HDD+SSD)</span><span class="v" id="sumBlockRaw">0.0 TB</span></div>
+                <div class="kv"><span class="k">Cache Ratio</span><span class="v accent-green" id="sumBlockRatio">0.00%</span></div>
+                <div class="result-net">
+                    <span class="label">Net Usable</span>
+                    <span class="value" id="sumBlockUsable">0.0 TB</span>
+                </div>
+            </div>
+
+            <div class="result-card r-total">
+                <div class="result-title">Cluster Net Usable</div>
+                <div class="big-number">
+                    <span class="num" id="outTotalUsable">0.0</span><span class="unit">TB</span>
+                </div>
+                <div class="footer-meta">
+                    <div class="kv"><span class="k">Deployment</span><span class="v" id="deployType">Converged</span></div>
+                    <div class="kv"><span class="k">RAM / Node</span><span class="v" id="sumRamNode">0 GB</span></div>
+                    <div class="kv"><span class="k">Total Add-on RAM</span><span class="v accent-yellow" id="sumAddRam">0 DIMMs</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="notice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div><strong>SSD as Cache</strong> — SSD/NVMe accelerates I/O but is excluded from Net Usable.&nbsp;&nbsp;<strong>SSD as Data</strong> — SSD/NVMe capacity is added to the data tier and counted toward Net Usable under the pool's redundancy policy.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ===== Pool definitions ===== */
+const FILE_POOL_DEFAULTS = [
+    { hddSize: 12, hddQty: 14, ssdSize: 7.68, ssdQty: 4, policy: 'ec42', ssdMode: 'cache', enabled: true },
+    { hddSize: 12, hddQty: 14, ssdSize: 7.68, ssdQty: 4, policy: 'ec42', ssdMode: 'cache', enabled: false },
+    { hddSize: 12, hddQty: 14, ssdSize: 7.68, ssdQty: 4, policy: 'ec42', ssdMode: 'cache', enabled: false },
+];
+const BLOCK_POOL_DEFAULTS = [
+    { hddSize: 10, hddQty: 4, ssdSize: 3.84, ssdQty: 1, policy: '2copy', ssdMode: 'cache', enabled: true },
+    { hddSize: 10, hddQty: 4, ssdSize: 3.84, ssdQty: 1, policy: '2copy', ssdMode: 'cache', enabled: false },
+    { hddSize: 10, hddQty: 4, ssdSize: 3.84, ssdQty: 1, policy: '2copy', ssdMode: 'cache', enabled: false },
+];
+
+const FILE_POLICIES = [['ec42', 'EC 4+2'], ['ec82', 'EC 8+2']];
+const BLOCK_POLICIES = [['2copy', '2-Copy'], ['3copy', '3-Copy']];
+
+function poolTemplate(kind, idx, defaults) {
+    const prefix = (kind === 'file' ? 'filePool' : 'blockPool') + (idx + 1);
+    const tag = (kind === 'file' ? 'A' : 'B') + (idx + 1);
+    const policies = kind === 'file' ? FILE_POLICIES : BLOCK_POLICIES;
+    const ssdLabel = kind === 'file' ? 'SSD / NVMe' : 'SSD';
+    return `
+    <div class="pool pool-${kind} ${defaults.enabled ? '' : 'disabled'}" id="${prefix}Panel">
+        <label class="pool-head" for="${prefix}Enable">
+            <input type="checkbox" id="${prefix}Enable" class="pool-check" ${defaults.enabled ? 'checked' : ''} onchange="onPoolToggle('${prefix}'); calculate()">
+            <span class="pool-tag">Pool ${tag}</span>
+            <span class="pool-name">${kind === 'file' ? 'File / Object' : 'Block'} pool ${idx + 1}</span>
+            <span class="pool-summary" id="${prefix}Summary"></span>
+        </label>
+        <div class="pool-body">
+            <div class="field">
+                <label class="field-label">HDD Size (TB)</label>
+                <select id="${prefix}HddSize" class="field-control" onchange="calculate()"></select>
+            </div>
+            <div class="field">
+                <label class="field-label">HDD Qty / Node</label>
+                <input type="number" id="${prefix}HddQty" value="${defaults.hddQty}" class="field-control" oninput="calculate()">
+            </div>
+            <div class="field full">
+                <label class="field-label">${ssdLabel} Role</label>
+                <div class="seg">
+                    <label><input type="radio" name="${prefix}SsdMode" value="cache" ${defaults.ssdMode==='cache'?'checked':''} onchange="calculate()"><span><span class="seg-mini"></span>SSD as Cache</span></label>
+                    <label><input type="radio" name="${prefix}SsdMode" value="data" ${defaults.ssdMode==='data'?'checked':''} onchange="calculate()"><span><span class="seg-mini"></span>SSD as Data</span></label>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field-label">${ssdLabel} Size (TB)</label>
+                <select id="${prefix}SsdSize" class="field-control" onchange="calculate()"></select>
+            </div>
+            <div class="field">
+                <label class="field-label">${ssdLabel} Qty / Node</label>
+                <input type="number" id="${prefix}SsdQty" value="${defaults.ssdQty}" class="field-control" oninput="calculate()">
+            </div>
+            <div class="field full">
+                <label class="field-label">Redundancy Policy</label>
+                <select id="${prefix}Policy" class="field-control" onchange="calculate()">
+                    ${policies.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+    </div>`;
+}
+
+function buildPools() {
+    document.getElementById('filePoolStack').innerHTML = FILE_POOL_DEFAULTS.map((d, i) => poolTemplate('file', i, d)).join('');
+    document.getElementById('blockPoolStack').innerHTML = BLOCK_POOL_DEFAULTS.map((d, i) => poolTemplate('block', i, d)).join('');
+}
+
+function onPoolToggle(prefix) {
+    const enabled = document.getElementById(prefix + 'Enable').checked;
+    const panel = document.getElementById(prefix + 'Panel');
+    panel.classList.toggle('disabled', !enabled);
+}
+
+/* ===== Original calculation logic — preserved ===== */
+let isInitializing = true;
+
+function initializeApp() {
+    buildPools();
+
+    const hddOptions = inventoryData.hardware.hdd_sizes.map(size => `<option value="${size}">${size} TB HDD</option>`).join('');
+    const ssdOptions = inventoryData.hardware.cache_sizes.map(size => `<option value="${size}">${size} TB</option>`).join('');
+
+    [1, 2, 3].forEach(i => {
+        const fp = 'filePool' + i, bp = 'blockPool' + i;
+        document.getElementById(fp + 'HddSize').innerHTML = hddOptions;
+        document.getElementById(bp + 'HddSize').innerHTML = hddOptions;
+        document.getElementById(fp + 'SsdSize').innerHTML = ssdOptions;
+        document.getElementById(bp + 'SsdSize').innerHTML = ssdOptions;
+        document.getElementById(fp + 'HddSize').value = FILE_POOL_DEFAULTS[i-1].hddSize;
+        document.getElementById(bp + 'HddSize').value = BLOCK_POOL_DEFAULTS[i-1].hddSize;
+        document.getElementById(fp + 'SsdSize').value = FILE_POOL_DEFAULTS[i-1].ssdSize;
+        document.getElementById(bp + 'SsdSize').value = BLOCK_POOL_DEFAULTS[i-1].ssdSize;
+    });
+
+    onArchChange();
+    isInitializing = false;
+}
+
+function onArchChange() {
+    const modelSelect = document.getElementById('serverModel');
+    modelSelect.innerHTML = '';
+    let firstModel = null;
+    for (const modelName in inventoryData.models) {
+        if (!modelName.includes('-F')) {
+            let option = document.createElement('option');
+            option.value = modelName;
+            option.text = modelName;
+            modelSelect.appendChild(option);
+            if (!firstModel) firstModel = modelName;
+        }
+    }
+    modelSelect.value = inventoryData.models["aStor-EDS3650-W"] ? "aStor-EDS3650-W" : firstModel;
+    onModelChange();
+}
+
+function onModelChange() {
+    let modelKey = document.getElementById('serverModel').value;
+    if (!modelKey) return;
+    let modelInfo = inventoryData.models[modelKey];
+
+    document.getElementById('lblMinNode').innerText = modelInfo.minNodes;
+    document.getElementById('lblMaxNode').innerText = modelInfo.maxNodes;
+    document.getElementById('lblCpu').innerText = modelInfo.cpu;
+    document.getElementById('lblPci').innerText = modelInfo.pci;
+
+    const ramSelect = document.getElementById('nodeRam');
+    ramSelect.innerHTML = '';
+    modelInfo.supportedDimms.forEach(dimmQty => {
+        let option = document.createElement('option');
+        option.value = dimmQty;
+        let gbTotal = dimmQty * inventoryData.hardware.dimm_size_gb;
+        let label = `${gbTotal} GB (${dimmQty}x32GB)`;
+        if (dimmQty === modelInfo.defaultDimms) label += " — DEFAULT";
+        option.text = label;
+        ramSelect.appendChild(option);
+    });
+    ramSelect.value = modelInfo.defaultDimms;
+
+    if (!isInitializing) calculate();
+}
+
+/* Per-pool calc — same logic as original, with SSD-as-Data option */
+function calculatePool(prefix, isFile, nodes, minNodes) {
+    const enabled = document.getElementById(prefix + 'Enable').checked;
+    const result = { enabled, usable: 0, hddTotal: 0, ssdTotal: 0, rawTotal: 0, ratio: 0, ssdMode: 'cache' };
+    if (!enabled || nodes < minNodes) return result;
+
+    const policy = document.getElementById(prefix + 'Policy').value;
+    const ssdMode = document.querySelector(`input[name="${prefix}SsdMode"]:checked`).value;
+    const ssdSize = parseFloat(document.getElementById(prefix + 'SsdSize').value) || 0;
+    const ssdQty = parseFloat(document.getElementById(prefix + 'SsdQty').value) || 0;
+    const hddSize = parseFloat(document.getElementById(prefix + 'HddSize').value) || 0;
+    const hddQty = parseFloat(document.getElementById(prefix + 'HddQty').value) || 0;
+
+    result.ssdMode = ssdMode;
+    result.hddTotal = hddQty * nodes;
+    result.ssdTotal = ssdQty * nodes;
+    const ssdRaw = ssdSize * result.ssdTotal;
+    const hddRaw = hddSize * result.hddTotal;
+    result.rawTotal = hddRaw + ssdRaw;
+    if (hddRaw > 0) result.ratio = (ssdRaw / hddRaw) * 100;
+
+    // SSD as Data: include SSD in data tier. SSD as Cache: exclude.
+    const dataRaw = ssdMode === 'data' ? (hddRaw + ssdRaw) : hddRaw;
+
+    if (isFile) {
+        if (policy === 'ec42') result.usable = dataRaw * 0.8 / 1.5;
+        else if (policy === 'ec82') result.usable = dataRaw * 0.8 / 1.25;
+    } else {
+        if (policy === '2copy') result.usable = dataRaw * 0.85 / 2;
+        else if (policy === '3copy') result.usable = dataRaw * 0.85 / 3;
+    }
+    return result;
+}
+
+function updatePoolSummary(prefix, res) {
+    const el = document.getElementById(prefix + 'Summary');
+    if (!el) return;
+    if (!res.enabled) { el.innerText = ''; return; }
+    const mode = res.ssdMode === 'data' ? 'SSD: Data' : 'SSD: Cache';
+    el.innerText = `${mode} · ${res.usable.toFixed(1)} TB usable`;
+}
+
+function calculate() {
+    let modelKey = document.getElementById('serverModel').value;
+    if (!modelKey) return;
+    let modelInfo = inventoryData.models[modelKey];
+
+    let nodes = parseInt(document.getElementById('globalNodes').value) || 0;
+    let warningEl = document.getElementById('nodeWarning');
+    if (nodes < modelInfo.minNodes || nodes > modelInfo.maxNodes) {
+        warningEl.innerText = `Node range is ${modelInfo.minNodes}–${modelInfo.maxNodes}`;
+        warningEl.style.display = '';
+        document.getElementById('globalNodes').style.borderColor = 'var(--red)';
+    } else {
+        warningEl.style.display = 'none';
+        document.getElementById('globalNodes').style.borderColor = '';
+    }
+
+    let selectedDimms = parseInt(document.getElementById('nodeRam').value) || modelInfo.defaultDimms;
+    let ramPerNodeGB = selectedDimms * inventoryData.hardware.dimm_size_gb;
+    let addOnDimmsPerNode = selectedDimms > modelInfo.defaultDimms ? (selectedDimms - modelInfo.defaultDimms) : 0;
+    let totalAddOnDimmsCluster = addOnDimmsPerNode * nodes;
+
+    // Aggregate file pools
+    let fileAgg = { usable: 0, hdd: 0, ssd: 0, raw: 0, ssdRaw: 0, hddRaw: 0, count: 0 };
+    let blockAgg = { usable: 0, hdd: 0, ssd: 0, raw: 0, ssdRaw: 0, hddRaw: 0, count: 0 };
+
+    [1, 2, 3].forEach(i => {
+        const fp = 'filePool' + i;
+        const r = calculatePool(fp, true, nodes, modelInfo.minNodes);
+        updatePoolSummary(fp, r);
+        if (r.enabled) {
+            fileAgg.count++;
+            fileAgg.usable += r.usable;
+            fileAgg.hdd += r.hddTotal;
+            fileAgg.ssd += r.ssdTotal;
+            fileAgg.raw += r.rawTotal;
+            // For ratio, accumulate raw HDD & SSD separately
+            const hddSize = parseFloat(document.getElementById(fp + 'HddSize').value) || 0;
+            const ssdSize = parseFloat(document.getElementById(fp + 'SsdSize').value) || 0;
+            fileAgg.hddRaw += hddSize * r.hddTotal;
+            fileAgg.ssdRaw += ssdSize * r.ssdTotal;
+        }
+    });
+
+    [1, 2, 3].forEach(i => {
+        const bp = 'blockPool' + i;
+        const r = calculatePool(bp, false, nodes, modelInfo.minNodes);
+        updatePoolSummary(bp, r);
+        if (r.enabled) {
+            blockAgg.count++;
+            blockAgg.usable += r.usable;
+            blockAgg.hdd += r.hddTotal;
+            blockAgg.ssd += r.ssdTotal;
+            blockAgg.raw += r.rawTotal;
+            const hddSize = parseFloat(document.getElementById(bp + 'HddSize').value) || 0;
+            const ssdSize = parseFloat(document.getElementById(bp + 'SsdSize').value) || 0;
+            blockAgg.hddRaw += hddSize * r.hddTotal;
+            blockAgg.ssdRaw += ssdSize * r.ssdTotal;
+        }
+    });
+
+    const fileRatio = fileAgg.hddRaw > 0 ? (fileAgg.ssdRaw / fileAgg.hddRaw) * 100 : 0;
+    const blockRatio = blockAgg.hddRaw > 0 ? (blockAgg.ssdRaw / blockAgg.hddRaw) * 100 : 0;
+
+    let typeText = "None";
+    if (fileAgg.count && blockAgg.count) typeText = "Converged";
+    else if (fileAgg.count) typeText = "Independent (File/Object)";
+    else if (blockAgg.count) typeText = "Independent (Block)";
+    document.getElementById('deployType').innerText = typeText;
+
+    document.getElementById('sumRamNode').innerText = `${ramPerNodeGB} GB`;
+    document.getElementById('sumAddRam').innerText = `${totalAddOnDimmsCluster}× 32GB`;
+
+    document.getElementById('fileCount').innerText = `${fileAgg.count} pool${fileAgg.count === 1 ? '' : 's'}`;
+    document.getElementById('blockCount').innerText = `${blockAgg.count} pool${blockAgg.count === 1 ? '' : 's'}`;
+
+    document.getElementById('sumFileHdd').innerText = fileAgg.hdd;
+    document.getElementById('sumFileSsd').innerText = fileAgg.ssd;
+    document.getElementById('sumFileRaw').innerText = fileAgg.raw.toFixed(1) + " TB";
+    document.getElementById('sumFileRatio').innerText = fileRatio.toFixed(2) + "%";
+    document.getElementById('sumFileUsable').innerText = fileAgg.usable.toFixed(1) + " TB";
+
+    document.getElementById('sumBlockHdd').innerText = blockAgg.hdd;
+    document.getElementById('sumBlockSsd').innerText = blockAgg.ssd;
+    document.getElementById('sumBlockRaw').innerText = blockAgg.raw.toFixed(1) + " TB";
+    document.getElementById('sumBlockRatio').innerText = blockRatio.toFixed(2) + "%";
+    document.getElementById('sumBlockUsable').innerText = blockAgg.usable.toFixed(1) + " TB";
+
+    document.getElementById('outTotalUsable').innerText = (fileAgg.usable + blockAgg.usable).toFixed(1);
+}
+
+function exportPDF() {
+    calculate();
+    var element = document.getElementById('sizer-app');
+    var hidden = element.querySelectorAll('.actions, .tabs');
+    hidden.forEach(function (el) { el.classList.add('pdf-hide'); });
+
+    // blocks that must never be sliced in the middle
+    var AVOID = '.section-head, .field-grid, .pool, .results, .result-card, .notice';
+    var SCALE = 2;
+
+    html2canvas(element, { scale: SCALE, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: -window.scrollY })
+    .then(function (canvas) {
+        var root = element.getBoundingClientRect();
+        var blocks = Array.prototype.map.call(element.querySelectorAll(AVOID), function (el) {
+            var r = el.getBoundingClientRect();
+            return { top: (r.top - root.top) * SCALE, bottom: (r.bottom - root.top) * SCALE };
+        });
+
+        var jsPDF = window.jspdf.jsPDF;
+        var pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+        var M = 8;                                            // page margin (mm)
+        var pageW = pdf.internal.pageSize.getWidth() - 2 * M;
+        var pageH = pdf.internal.pageSize.getHeight() - 2 * M;
+        var mmPerPx = pageW / canvas.width;
+        var pageHpx = Math.floor(pageH / mmPerPx);            // canvas px that fit on one page
+
+        var y = 0, first = true;
+        while (y < canvas.height - 1) {
+            var cut = Math.min(y + pageHpx, canvas.height);
+            if (cut < canvas.height) {
+                // move the cut up above any block it would slice through
+                var moved = true, guard = 0;
+                while (moved && guard++ < 50) {
+                    moved = false;
+                    for (var i = 0; i < blocks.length; i++) {
+                        var b = blocks[i];
+                        // ignore blocks taller than ~3/4 page (cannot be kept whole) or starting at page top
+                        if (b.top < cut && b.bottom > cut && b.top > y + pageHpx * 0.25 && (b.bottom - b.top) < pageHpx * 0.75) {
+                            cut = Math.floor(b.top); moved = true;
+                        }
+                    }
+                }
+            }
+            var h = Math.max(1, Math.round(cut - y));
+            var slice = document.createElement('canvas');
+            slice.width = canvas.width; slice.height = h;
+            var ctx = slice.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, slice.width, slice.height);
+            ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+            if (!first) pdf.addPage();
+            pdf.addImage(slice.toDataURL('image/jpeg', 0.98), 'JPEG', M, M, pageW, h * mmPerPx);
+            first = false;
+            y += h;
+        }
+        pdf.save('aStor_Sizing_Report.pdf');
+    })
+    .catch(function (e) { console.error('PDF export failed', e); })
+    .finally(function () { hidden.forEach(function (el) { el.classList.remove('pdf-hide'); }); });
+}
+
+window.onload = initializeApp;
+</script>
+</body>
+</html>

@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RVTools Pro — Infrastructure Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --blue: #1a73e8; --green: #16a34a; --red: #dc2626;
+            --orange: #f59e0b; --purple: #7c3aed;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; min-height: 100vh; margin: 0; }
+        .sidebar { width: 240px; background: white; border-right: 1px solid #e5e7eb; position: fixed; height: 100vh; z-index: 100; display: flex; flex-direction: column; }
+        .content { margin-left: 240px; padding: 24px; }
+
+        /* Summary Cards */
+        .stat-card { background: white; border-radius: 16px; padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-top: 4px solid; }
+        .stat-card .val { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+        .stat-card .lbl { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 4px; }
+        .stat-card .sub { font-size: 0.75rem; color: #6b7280; margin-top: 6px; }
+
+        /* Metric rows inside cards */
+        .mini-stat { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.75rem; }
+        .mini-stat:last-child { border-bottom: none; }
+
+        /* Progress bar */
+        .bar-wrap { background: #f3f4f6; border-radius: 999px; height: 6px; margin-top: 3px; }
+        .bar-fill { height: 6px; border-radius: 999px; transition: width 0.4s; }
+
+        /* Table */
+        .tbl-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #f8fafc; font-weight: 700; color: #6b7280; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; border-bottom: 2px solid #e5e7eb; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
+        th:hover { background: #eff6ff; color: #1d4ed8; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: middle; }
+        tr:hover td { background: #f8fafc; }
+
+        /* Badge */
+        .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Pagination */
+        .pg-btn { padding: 5px 10px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; background: white; color: #4b5563; transition: all 0.15s; }
+        .pg-btn:hover { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+        .pg-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+        .pg-btn:disabled { opacity: 0.4; cursor: default; }
+
+        /* Issue items */
+        .issue-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; }
+
+        @media print { .no-print { display: none !important; } .content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="flex">
+    <!-- Sidebar -->
+    <nav class="sidebar no-print">
+        <div class="p-5 bg-blue-700 text-white">
+            <div class="font-black text-base tracking-tight">🖥️ RVTools Analyzer</div>
+            <div class="text-blue-200 text-[10px] mt-0.5 font-medium uppercase tracking-widest">VMware Infrastructure</div>
+        </div>
+        <div class="p-3 space-y-1 flex-1">
+            <a href="index.html" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-blue-600 font-bold text-sm hover:bg-blue-50 transition" style="text-decoration:none;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                Back to Menu
+            </a>
+            <button onclick="resetUpload()" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition text-sm text-left">
+                📁 New Analysis
+            </button>
+            <button onclick="scrollTo('sec-summary')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition text-sm text-left">
+                📊 Resource Summary
+            </button>
+            <button onclick="scrollTo('sec-issues')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition text-sm text-left">
+                ⚠️ Issues
+            </button>
+            <button onclick="scrollTo('sec-charts')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition text-sm text-left">
+                📈 Charts
+            </button>
+            <button onclick="scrollTo('sec-table')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition text-sm text-left">
+                📋 VM Inventory
+            </button>
+        </div>
+        <div class="p-3 border-t" id="sideStats" style="display:none;">
+            <div class="text-[9px] font-bold text-gray-400 uppercase mb-2 tracking-widest">Quick Stats</div>
+            <div class="space-y-1 text-xs text-gray-600" id="sideStatsBody"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="content">
+        <div class="max-w-6xl mx-auto">
+
+            <!-- Page Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Infrastructure Data Analysis</h1>
+                    <p class="text-gray-400 text-sm mt-0.5" id="fileLabel">Upload an RVTools Excel export to begin</p>
+                </div>
+                <div id="exportAction" class="hidden no-print">
+                    <button onclick="exportToPDF()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold shadow hover:bg-blue-700 transition text-sm">📄 Export PDF</button>
+                </div>
+            </div>
+
+            <!-- Upload Zone -->
+            <div id="importSection" class="bg-white p-16 rounded-2xl border-2 border-dashed border-blue-200 text-center shadow-sm">
+                <div class="text-6xl mb-5">📊</div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Import RVTools Export</h2>
+                <p class="text-gray-400 mb-2 text-sm">Select the <strong>.xlsx</strong> file exported from RVTools for VMware</p>
+                <p class="text-gray-300 text-xs mb-8">Reads sheets: <code>vInfo</code> · <code>vSnapshot</code> · <code>vHealth</code> · <code>vHost</code> · <code>vCluster</code></p>
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="handleFileUpload(event)">
+                <button onclick="document.getElementById('fileInput').click()"
+                    class="bg-blue-600 text-white px-10 py-3.5 rounded-xl font-bold text-base hover:shadow-lg hover:bg-blue-700 transition-all active:scale-95">
+                    Choose File
+                </button>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="errorBanner" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700 text-sm font-medium"></div>
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="hidden space-y-6">
+
+                <!-- ── Section 1: Summary Cards ── -->
+                <div id="sec-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- VMs -->
+                    <div class="stat-card" style="border-top-color:#1a73e8">
+                        <div class="lbl">Virtual Machines</div>
+                        <div class="val text-blue-700" id="cVM">—</div>
+                        <div class="sub" id="cVMsub">—</div>
+                        <div class="mt-3 space-y-0">
+                            <div class="mini-stat"><span>Powered On</span><span class="font-bold text-green-600" id="cPowOn">—</span></div>
+                            <div class="mini-stat"><span>Powered Off</span><span class="font-bold text-gray-500" id="cPowOff">—</span></div>
+                            <div class="mini-stat"><span>Suspended</span><span class="font-bold text-yellow-600" id="cSuspend">—</span></div>
+                        </div>
+                    </div>
+                    <!-- vCPU -->
+                    <div class="stat-card" style="border-top-color:#16a34a">
+                        <div class="lbl">vCPU Allocated</div>
+                        <div class="val text-green-700" id="cCPU">—</div>
+                        <div class="sub" id="cCPUsub">—</div>
+                        <div class="mt-3 space-y-0">
+                            <div class="mini-stat"><span>Avg vCPU / VM</span><span class="font-bold" id="cCPUavg">—</span></div>
+                            <div class="mini-stat"><span>Max vCPU (1 VM)</span><span class="font-bold" id="cCPUmax">—</span></div>
+                            <div class="mini-stat"><span>Overcommit Ratio</span><span class="font-bold text-blue-600" id="cOvercommit">—</span></div>
+                        </div>
+                    </div>
+                    <!-- RAM -->
+                    <div class="stat-card" style="border-top-color:#7c3aed">
+                        <div class="lbl">Memory Allocated</div>
+                        <div class="val text-purple-700" id="cRAM">—</div>
+                        <div class="sub" id="cRAMsub">—</div>
+                        <div class="mt-3 space-y-0">
+                            <div class="mini-stat"><span>Avg RAM / VM</span><span class="font-bold" id="cRAMavg">—</span></div>
+                            <div class="mini-stat"><span>Max RAM (1 VM)</span><span class="font-bold" id="cRAMmax">—</span></div>
+                            <div class="mini-stat"><span>Powered-On RAM</span><span class="font-bold text-purple-600" id="cRAMactive">—</span></div>
+                        </div>
+                    </div>
+                    <!-- Storage -->
+                    <div class="stat-card" style="border-top-color:#f59e0b">
+                        <div class="lbl">Storage Provisioned</div>
+                        <div class="val text-orange-600" id="cStore">—</div>
+                        <div class="sub" id="cStoresub">—</div>
+                        <div class="mt-3 space-y-0">
+                            <div class="mini-stat"><span>Avg Disk / VM</span><span class="font-bold" id="cStoreAvg">—</span></div>
+                            <div class="mini-stat"><span>Max Disk (1 VM)</span><span class="font-bold" id="cStoreMax">—</span></div>
+                            <div class="mini-stat"><span>Snapshots Found</span><span class="font-bold text-red-500" id="cSnaps">—</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Section 2: Issues ── -->
+                <div id="sec-issues" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="bg-white rounded-2xl shadow-sm border border-red-100 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-red-600 text-sm">⚠️ Large Snapshots (&gt; 1 GB)</h3>
+                            <span id="snapBadge" class="badge bg-red-100 text-red-700">0</span>
+                        </div>
+                        <div id="snapshotList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-yellow-100 p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-yellow-600 text-sm">🔍 Orphaned &amp; Zombie Files</h3>
+                            <span id="orphanBadge" class="badge bg-yellow-100 text-yellow-700">0</span>
+                        </div>
+                        <div id="orphanList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- ── Section 3: Charts ── -->
+                <div id="sec-charts" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="bg-white rounded-2xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-700 text-sm mb-3">Guest OS Distribution</h3>
+                        <canvas id="osChart" height="220"></canvas>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-700 text-sm mb-1">Top 10 VMs by RAM Allocated</h3>
+                        <p class="text-gray-400 text-[10px] mb-3">Sorted largest to smallest (GB)</p>
+                        <canvas id="ramBarChart" height="220"></canvas>
+                    </div>
+                </div>
+
+                <!-- ── Section 4: VM Inventory ── -->
+                <div id="sec-table" class="bg-white rounded-2xl shadow-sm p-5">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-base">VM Inventory</h3>
+                            <p class="text-gray-400 text-xs mt-0.5" id="tableInfo">—</p>
+                        </div>
+                        <div class="flex gap-2 items-center flex-wrap">
+                            <select id="filterPower" onchange="applyFilters()" class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white text-gray-600 focus:ring-2 focus:ring-blue-400 outline-none">
+                                <option value="">All States</option>
+                                <option value="on">Powered On</option>
+                                <option value="off">Powered Off</option>
+                                <option value="suspend">Suspended</option>
+                            </select>
+                            <input type="text" id="vmSearch" oninput="applyFilters()" placeholder="Search VM / OS / Host…"
+                                class="border border-gray-200 bg-gray-50 px-3 py-1.5 rounded-xl text-xs w-56 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                    </div>
+                    <div class="tbl-wrap">
+                        <table id="vmTable">
+                            <thead id="vmThead"></thead>
+                            <tbody id="vmTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="pagination" class="flex items-center justify-between mt-4"></div>
+                </div>
+
+            </div><!-- /dashboard -->
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let rawVMs = [], filteredVMs = [], currentPage = 1;
+const ROWS_PER_PAGE = 20;
+let chartInstances = {};
+let colMap = {};   // detected column names for this file
+
+// ═══════════════════════════════════════════════════════════
+//  COLUMN AUTO-DETECTION
+//  Tries candidate names case-insensitively against actual keys
+// ═══════════════════════════════════════════════════════════
+function detectCols(rows) {
+    if (!rows || rows.length === 0) return {};
+    const keys = Object.keys(rows[0]);
+    const ci = (k) => keys.find(x => x.toLowerCase() === k.toLowerCase()) || null;
+    const any = (...candidates) => { for (const c of candidates) { const f = ci(c); if (f) return f; } return null; };
+
+    return {
+        name:       any('VM', 'Name', 'DNS Name', 'VM Name'),
+        power:      any('Powerstate', 'Power state', 'State', 'Power State'),
+        cpu:        any('CPUs', 'vCPUs', 'NumCPU', '# CPU', 'CPU'),
+        memMB:      any('Memory MB', 'Memory MiB', 'Provisioned Memory MiB', 'Memory (MB)'),
+        memRaw:     any('Memory'),            // might be GB or MB depending on version
+        provMB:     any('Provisioned MB', 'Provisioned MiB', 'Total disk capacity MiB', 'Capacity MB', 'Disk Provisioned MB', 'Disk Provisioned MiB'),
+        usedMB:     any('In Use MB', 'In Use MiB', 'Used MB'),
+        os:         any('Guest OS', 'OS', 'Guest OS full name', 'OS according to the configuration file', 'Operating System'),
+        host:       any('Host', 'ESX Host', 'DNS Name of ESX server'),
+        cluster:    any('Cluster'),
+        datacenter: any('Datacenter'),
+        snapCount:  any('Snapshots', '# Snapshots'),
+        annotation: any('Annotation', 'Notes'),
+    };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UNIT-SAFE MEMORY READER
+//  RVTools memory is nearly always in MB/MiB; "Memory" alone
+//  can be GB in rare versions → if value < 512 treat as GB
+// ═══════════════════════════════════════════════════════════
+function getMemMB(vm) {
+    // Prefer explicit MB column
+    if (colMap.memMB) {
+        const v = Number(vm[colMap.memMB] || 0);
+        if (v > 0) return v;
+    }
+    // Fall back to generic "Memory" column
+    if (colMap.memRaw) {
+        const v = Number(vm[colMap.memRaw] || 0);
+        if (v > 0) {
+            // Heuristic: if value is suspiciously small it's already GB
+            return v < 512 ? v * 1024 : v;
+        }
+    }
+    return 0;
+}
+
+function getProvMB(vm) {
+    if (colMap.provMB) return Number(vm[colMap.provMB] || 0);
+    return 0;
+}
+
+function getOS(vm) {
+    if (colMap.os) return String(vm[colMap.os] || '').trim() || 'Unknown';
+    return 'Unknown';
+}
+
+function getPower(vm) {
+    const raw = String(vm[colMap.power] || '').toLowerCase();
+    if (raw.includes('poweredon') || raw === 'on') return 'on';
+    if (raw.includes('suspended') || raw.includes('suspend')) return 'suspend';
+    return 'off';
+}
+
+function getCPU(vm) {
+    if (colMap.cpu) return Number(vm[colMap.cpu] || 0);
+    return 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════════════
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('fileLabel').textContent = `Processing: ${file.name}…`;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            processRVData(wb, file.name);
+        } catch (err) {
+            showError('Failed to parse Excel file: ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function processRVData(wb, filename) {
+    // Resolve vInfo sheet — try name then fallback to first sheet
+    const vInfoSheet = wb.Sheets['vInfo'] || wb.Sheets[wb.SheetNames[0]];
+    if (!vInfoSheet) { showError('No data sheet found in this file.'); return; }
+
+    const vInfo     = XLSX.utils.sheet_to_json(vInfoSheet);
+    const vSnapshot = wb.Sheets['vSnapshot'] ? XLSX.utils.sheet_to_json(wb.Sheets['vSnapshot']) : [];
+    const vHealth   = wb.Sheets['vHealth']   ? XLSX.utils.sheet_to_json(wb.Sheets['vHealth'])   : [];
+
+    if (vInfo.length === 0) { showError('vInfo sheet is empty. Please check your export.'); return; }
+
+    // Auto-detect columns from actual data
+    colMap = detectCols(vInfo);
+
+    rawVMs      = vInfo;
+    filteredVMs = [...rawVMs];
+    currentPage = 1;
+
+    document.getElementById('fileLabel').textContent = `${filename}  ·  ${vInfo.length.toLocaleString()} VMs loaded`;
+    document.getElementById('importSection').classList.add('hidden');
+    document.getElementById('errorBanner').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('exportAction').classList.remove('hidden');
+
+    buildSummaryCards(rawVMs, vSnapshot.length);
+    renderIssues(vSnapshot, vHealth);
+    renderCharts(rawVMs);
+    buildTableHead();
+    renderVMTable();
+    updateSideStats(rawVMs);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SUMMARY CARDS
+// ═══════════════════════════════════════════════════════════
+function buildSummaryCards(vms, totalSnaps) {
+    const n = vms.length;
+    const on       = vms.filter(v => getPower(v) === 'on').length;
+    const off      = vms.filter(v => getPower(v) === 'off').length;
+    const suspend  = vms.filter(v => getPower(v) === 'suspend').length;
+
+    const cpus    = vms.map(v => getCPU(v));
+    const totalCPU = cpus.reduce((a,b) => a+b, 0);
+    const maxCPU   = Math.max(...cpus, 0);
+    const avgCPU   = n ? (totalCPU / n).toFixed(1) : 0;
+
+    const mems    = vms.map(v => getMemMB(v));
+    const totalMemMB = mems.reduce((a,b) => a+b, 0);
+    const maxMemMB   = Math.max(...mems, 0);
+    const activeMem  = vms.filter(v => getPower(v) === 'on').reduce((a,v) => a + getMemMB(v), 0);
+
+    const stores  = vms.map(v => getProvMB(v));
+    const totalStoreMB = stores.reduce((a,b) => a+b, 0);
+    const maxStoreMB   = Math.max(...stores, 0);
+
+    const totalRAM_GB  = Math.round(totalMemMB   / 1024);
+    const maxRAM_GB    = Math.round(maxMemMB      / 1024);
+    const activeRAM_GB = Math.round(activeMem     / 1024);
+    const totalSTR_GB  = Math.round(totalStoreMB  / 1024);
+    const maxSTR_GB    = Math.round(maxStoreMB    / 1024);
+    const avgSTR_GB    = n ? Math.round(totalStoreMB / n / 1024) : 0;
+
+    // VMs
+    set('cVM',       n.toLocaleString());
+    set('cVMsub',    `${((on/n)*100).toFixed(0)}% powered on`);
+    set('cPowOn',    on.toLocaleString());
+    set('cPowOff',   off.toLocaleString());
+    set('cSuspend',  suspend.toLocaleString());
+
+    // vCPU
+    set('cCPU',       totalCPU.toLocaleString());
+    set('cCPUsub',    `${on} VMs active`);
+    set('cCPUavg',    avgCPU + ' cores');
+    set('cCPUmax',    maxCPU + ' cores');
+    set('cOvercommit', totalCPU ? (totalCPU / Math.max(totalCPU, 1)).toFixed(0) + ':1 hint' : '—');
+
+    // RAM
+    set('cRAM',       fmtGB(totalRAM_GB));
+    set('cRAMsub',    totalSTR_GB > 0 ? `${fmtGB(totalRAM_GB)} total allocated` : '');
+    set('cRAMavg',    fmtGB(n ? Math.round(totalMemMB / n / 1024) : 0));
+    set('cRAMmax',    fmtGB(maxRAM_GB));
+    set('cRAMactive', fmtGB(activeRAM_GB));
+
+    // Storage
+    set('cStore',    fmtGB(totalSTR_GB));
+    set('cStoresub', totalSTR_GB >= 1024 ? `${(totalSTR_GB/1024).toFixed(1)} TB total provisioned` : `${totalSTR_GB.toLocaleString()} GB total provisioned`);
+    set('cStoreAvg', fmtGB(avgSTR_GB) + ' / VM');
+    set('cStoreMax', fmtGB(maxSTR_GB));
+    set('cSnaps',    totalSnaps.toLocaleString());
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ISSUES
+// ═══════════════════════════════════════════════════════════
+function renderIssues(snaps, health) {
+    // Snapshots > 1 GB
+    const sizeCols = ['Size MB', 'Size MiB', 'SizeInMB', 'Size', 'Snapshot Size MB'];
+    const getSizeMB = (s) => {
+        for (const c of sizeCols) {
+            const v = Number(s[c] || 0);
+            if (v > 0) return v;
+        }
+        return 0;
+    };
+    const vmCol = (s) => s.VM || s.Name || s['VM Name'] || 'Unknown';
+
+    const large = snaps.filter(s => getSizeMB(s) > 1024)
+                       .sort((a,b) => getSizeMB(b) - getSizeMB(a));
+    set('snapBadge', large.length);
+    document.getElementById('snapshotList').innerHTML = large.length
+        ? large.map(s => {
+            const gb = (getSizeMB(s) / 1024).toFixed(1);
+            return `<div class="issue-row bg-red-50">
+                <span class="font-semibold text-gray-700 text-xs truncate max-w-[60%]">${vmCol(s)}</span>
+                <span class="badge bg-red-200 text-red-700">${gb} GB</span>
+            </div>`;
+          }).join('')
+        : '<p class="text-gray-400 text-xs">No large snapshots found. ✓</p>';
+
+    // Orphans / Zombies
+    const orphans = health.filter(h => {
+        const msg = String(h.Message || h.Description || h.Object || '').toLowerCase();
+        return msg.includes('zombie') || msg.includes('orphan') || msg.includes('dead');
+    });
+    set('orphanBadge', orphans.length);
+    document.getElementById('orphanList').innerHTML = orphans.length
+        ? orphans.map(o => `<div class="issue-row bg-yellow-50 text-xs text-gray-600">${o.Message || o.Description || o.Object}</div>`).join('')
+        : '<p class="text-gray-400 text-xs">No orphaned files detected. ✓</p>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════
+function destroyChart(id) {
+    if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function renderCharts(vms) {
+    // OS distribution
+    const osBuckets = {};
+    vms.forEach(v => {
+        const raw  = getOS(v);
+        let bucket = 'Other';
+        const lo   = raw.toLowerCase();
+        if (lo.includes('windows server 2022'))      bucket = 'Win Server 2022';
+        else if (lo.includes('windows server 2019')) bucket = 'Win Server 2019';
+        else if (lo.includes('windows server 2016')) bucket = 'Win Server 2016';
+        else if (lo.includes('windows server'))      bucket = 'Win Server (other)';
+        else if (lo.includes('windows'))             bucket = 'Windows (Desktop)';
+        else if (lo.includes('ubuntu'))              bucket = 'Ubuntu';
+        else if (lo.includes('centos'))              bucket = 'CentOS';
+        else if (lo.includes('red hat') || lo.includes('rhel')) bucket = 'RHEL';
+        else if (lo.includes('linux'))               bucket = 'Linux (other)';
+        else if (lo.includes('unknown') || raw === 'Unknown') bucket = 'Unknown';
+        osBuckets[bucket] = (osBuckets[bucket] || 0) + 1;
+    });
+    const osSorted = Object.entries(osBuckets).sort((a,b) => b[1]-a[1]);
+    const osColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#6366f1','#84cc16','#94a3b8'];
+
+    destroyChart('osChart');
+    chartInstances['osChart'] = new Chart(document.getElementById('osChart'), {
+        type: 'doughnut',
+        data: {
+            labels: osSorted.map(x => `${x[0]} (${x[1]})`),
+            datasets: [{ data: osSorted.map(x => x[1]), backgroundColor: osColors, borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: {
+            cutout: '55%',
+            plugins: {
+                legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${((ctx.parsed/vms.length)*100).toFixed(1)}%` } }
+            }
+        }
+    });
+
+    // Top 10 VMs by RAM
+    const top10 = [...vms]
+        .map(v => ({ name: (v[colMap.name] || 'N/A'), ram: Math.round(getMemMB(v) / 1024) }))
+        .sort((a,b) => b.ram - a.ram)
+        .slice(0, 10);
+
+    destroyChart('ramBarChart');
+    chartInstances['ramBarChart'] = new Chart(document.getElementById('ramBarChart'), {
+        type: 'bar',
+        data: {
+            labels: top10.map(x => x.name.length > 18 ? x.name.slice(0,16)+'…' : x.name),
+            datasets: [{
+                label: 'RAM (GB)',
+                data: top10.map(x => x.ram),
+                backgroundColor: '#818cf8',
+                borderRadius: 5,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} GB` } } },
+            scales: {
+                x: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 } } },
+                y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VM TABLE
+// ═══════════════════════════════════════════════════════════
+function buildTableHead() {
+    const cols = ['VM Name', 'State', 'vCPU', 'RAM (GB)', 'Disk (GB)', 'Guest OS', 'Host', 'Cluster'];
+    document.getElementById('vmThead').innerHTML =
+        '<tr>' + cols.map((c,i) => `<th onclick="sortTable(${i})" title="Sort">${c} <span class="text-gray-300">⇅</span></th>`).join('') + '</tr>';
+}
+
+let sortCol = -1, sortAsc = true;
+function sortTable(col) {
+    if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+    const getVal = (vm) => {
+        switch(col) {
+            case 0: return String(vm[colMap.name] || '').toLowerCase();
+            case 1: return getPower(vm);
+            case 2: return getCPU(vm);
+            case 3: return getMemMB(vm);
+            case 4: return getProvMB(vm);
+            case 5: return getOS(vm).toLowerCase();
+            case 6: return String(colMap.host ? vm[colMap.host] || '' : '').toLowerCase();
+            case 7: return String(colMap.cluster ? vm[colMap.cluster] || '' : '').toLowerCase();
+            default: return '';
+        }
+    };
+    filteredVMs.sort((a,b) => {
+        const va = getVal(a), vb = getVal(b);
+        if (typeof va === 'number') return sortAsc ? va-vb : vb-va;
+        return sortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+    currentPage = 1;
+    renderVMTable();
+}
+
+function renderVMTable() {
+    const start    = (currentPage - 1) * ROWS_PER_PAGE;
+    const pageData = filteredVMs.slice(start, start + ROWS_PER_PAGE);
+    const tbody    = document.getElementById('vmTableBody');
+
+    const powerBadge = (vm) => {
+        const p = getPower(vm);
+        if (p === 'on')      return '<span class="badge bg-green-100 text-green-700">On</span>';
+        if (p === 'suspend') return '<span class="badge bg-yellow-100 text-yellow-700">Suspended</span>';
+        return '<span class="badge bg-gray-100 text-gray-500">Off</span>';
+    };
+
+    tbody.innerHTML = pageData.map(vm => {
+        const ram   = Math.round(getMemMB(vm)  / 1024);
+        const store = Math.round(getProvMB(vm) / 1024);
+        const host  = colMap.host    ? (vm[colMap.host]    || '—') : '—';
+        const clust = colMap.cluster ? (vm[colMap.cluster] || '—') : '—';
+        return `<tr>
+            <td class="font-semibold text-blue-900 max-w-[180px] truncate" title="${vm[colMap.name] || ''}">${vm[colMap.name] || 'N/A'}</td>
+            <td>${powerBadge(vm)}</td>
+            <td class="font-mono text-center">${getCPU(vm) || '—'}</td>
+            <td class="font-mono text-right ${ram === 0 ? 'text-gray-300' : ''}">${ram || '—'}</td>
+            <td class="font-mono text-right ${store === 0 ? 'text-gray-300' : ''}">${store || '—'}</td>
+            <td class="text-gray-500 text-xs truncate max-w-[140px]" title="${getOS(vm)}">${getOS(vm)}</td>
+            <td class="text-gray-500 text-xs truncate max-w-[120px]" title="${host}">${host}</td>
+            <td class="text-gray-500 text-xs">${clust}</td>
+        </tr>`;
+    }).join('');
+
+    set('tableInfo', `Showing ${start+1}–${Math.min(start+ROWS_PER_PAGE, filteredVMs.length)} of ${filteredVMs.length.toLocaleString()} VMs`);
+    renderPagination();
+}
+
+function renderPagination() {
+    const total = Math.ceil(filteredVMs.length / ROWS_PER_PAGE);
+    const c = document.getElementById('pagination');
+
+    const prevBtn = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>← Prev</button>`;
+    const nextBtn = `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage>=total?'disabled':''}>Next →</button>`;
+
+    // Show up to 7 page buttons with ellipsis
+    let pages = '';
+    const range = (s,e) => { let r=''; for(let i=s;i<=e;i++) r+=`<button class="pg-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`; return r; };
+    if (total <= 7) {
+        pages = range(1, total);
+    } else if (currentPage <= 4) {
+        pages = range(1, 5) + '<span class="px-1 text-gray-400">…</span>' + range(total, total);
+    } else if (currentPage >= total - 3) {
+        pages = range(1,1) + '<span class="px-1 text-gray-400">…</span>' + range(total-4, total);
+    } else {
+        pages = range(1,1) + '<span class="px-1 text-gray-400">…</span>' + range(currentPage-1, currentPage+1) + '<span class="px-1 text-gray-400">…</span>' + range(total,total);
+    }
+
+    c.innerHTML = `<div class="text-xs text-gray-400">Page ${currentPage} of ${total}</div><div class="flex gap-1 items-center">${prevBtn}${pages}${nextBtn}</div>`;
+}
+
+function goPage(n) {
+    const total = Math.ceil(filteredVMs.length / ROWS_PER_PAGE);
+    currentPage = Math.max(1, Math.min(n, total));
+    renderVMTable();
+}
+
+function applyFilters() {
+    const query    = document.getElementById('vmSearch').value.toLowerCase().trim();
+    const powerFlt = document.getElementById('filterPower').value;
+
+    filteredVMs = rawVMs.filter(vm => {
+        const matchQ = !query ||
+            String(vm[colMap.name]    || '').toLowerCase().includes(query) ||
+            getOS(vm).toLowerCase().includes(query) ||
+            String(colMap.host ? vm[colMap.host] || '' : '').toLowerCase().includes(query) ||
+            String(colMap.cluster ? vm[colMap.cluster] || '' : '').toLowerCase().includes(query);
+
+        const p = getPower(vm);
+        const matchP = !powerFlt ||
+            (powerFlt === 'on'      && p === 'on') ||
+            (powerFlt === 'off'     && p === 'off') ||
+            (powerFlt === 'suspend' && p === 'suspend');
+
+        return matchQ && matchP;
+    });
+    currentPage = 1;
+    renderVMTable();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SIDEBAR QUICK STATS
+// ═══════════════════════════════════════════════════════════
+function updateSideStats(vms) {
+    const n = vms.length;
+    const on = vms.filter(v => getPower(v) === 'on').length;
+    const totalRAM = Math.round(vms.reduce((a,v) => a + getMemMB(v), 0) / 1024);
+    const totalSTR = Math.round(vms.reduce((a,v) => a + getProvMB(v), 0) / 1024);
+    document.getElementById('sideStatsBody').innerHTML = `
+        <div class="flex justify-between"><span>VMs</span><strong>${n}</strong></div>
+        <div class="flex justify-between"><span>Powered On</span><strong class="text-green-600">${on}</strong></div>
+        <div class="flex justify-between"><span>RAM</span><strong>${fmtGB(totalRAM)}</strong></div>
+        <div class="flex justify-between"><span>Storage</span><strong>${fmtGB(totalSTR)}</strong></div>`;
+    document.getElementById('sideStats').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT PDF
+// ═══════════════════════════════════════════════════════════
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(14);
+    doc.text('RVTools Infrastructure Report', 14, 15);
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text(`Generated: ${new Date().toLocaleString()}  ·  ${rawVMs.length} VMs`, 14, 22);
+
+    // Build rows for all filtered VMs
+    const rows = filteredVMs.map(vm => [
+        vm[colMap.name] || 'N/A',
+        getPower(vm),
+        getCPU(vm) || '—',
+        Math.round(getMemMB(vm)/1024) || '—',
+        Math.round(getProvMB(vm)/1024) || '—',
+        getOS(vm),
+        colMap.host    ? (vm[colMap.host]    || '—') : '—',
+        colMap.cluster ? (vm[colMap.cluster] || '—') : '—',
+    ]);
+
+    doc.autoTable({
+        head: [['VM Name','State','vCPU','RAM GB','Disk GB','Guest OS','Host','Cluster']],
+        body: rows,
+        startY: 28,
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [29,78,216] },
+    });
+    doc.save('RVTools_Report.pdf');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function fmtGB(gb) {
+    if (gb >= 1024) return (gb/1024).toFixed(1) + ' TB';
+    return gb.toLocaleString() + ' GB';
+}
+function set(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function resetUpload() { location.reload(); }
+function showError(msg) {
+    const el = document.getElementById('errorBanner');
+    el.textContent = '⚠️ ' + msg;
+    el.classList.remove('hidden');
+    document.getElementById('fileLabel').textContent = 'Upload failed';
+}
+</script>
+</body>
+</html>

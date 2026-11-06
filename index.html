@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sangfor Tools Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        .hero-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%);
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12);
+            border-color: #cbd5e1;
+        }
+
+        .icon-wrap {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .category-pill {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            transition: background 0.15s, color 0.15s;
+            text-decoration: none;
+        }
+        .nav-link:hover { background: #f1f5f9; color: #1e40af; }
+        .nav-link.active { background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+
+        .search-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+
+        .card.hidden-card { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- Hero Header -->
+    <div class="hero-bg text-white px-8 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <span class="text-blue-300 text-xs font-bold uppercase tracking-widest">Sangfor Presale Tools</span>
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-2">Infrastructure <span class="text-blue-400">Sizer</span> Portal</h1>
+                    <p class="text-slate-400 text-base font-medium">Specialized sizing engines for Sangfor solution design</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-slate-400 bg-white/5 border border-white/10 rounded-2xl px-5 py-3">
+                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span class="font-semibold text-slate-300">9 Tools Available</span>
+                    <span class="text-slate-600">·</span>
+                    <span>v2025</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white border-b border-slate-100 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-6xl mx-auto px-8 py-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div class="relative w-full sm:w-72">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="searchInput" oninput="filterCards()" placeholder="Search tools..." class="search-input w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-700 placeholder-slate-400">
+            </div>
+            <div class="flex gap-2 flex-wrap justify-center" id="filterBtns">
+                <button onclick="filterByTag('all')" class="filter-btn active category-pill bg-slate-800 text-white">All</button>
+                <button onclick="filterByTag('storage')" class="filter-btn category-pill bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition">Storage</button>
+                <button onclick="filterByTag('hci')" class="filter-btn category-pill bg-slate-100 text-slate-600 hover:bg-orange-50 hover:text-orange-700 transition">HCI</button>
+                <button onclick="filterByTag('compute')" class="filter-btn category-pill bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition">Compute</button>
+                <button onclick="filterByTag('backup')" class="filter-btn category-pill bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition">Backup</button>
+                <button onclick="filterByTag('analysis')" class="filter-btn category-pill bg-slate-100 text-slate-600 hover:bg-purple-50 hover:text-purple-700 transition">Analysis</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Cards Grid -->
+    <div class="max-w-6xl mx-auto px-8 py-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="cardGrid">
+
+            <!-- HCI Online Sizing -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='HCISizingTool.php'" data-tags="hci storage" data-name="HCI Online Sizing">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-orange-50">
+                        <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <span class="category-pill bg-orange-50 text-orange-600">HCI</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">HCI Online Sizing</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Cloud-based infrastructure planning for rapid HCI cluster design with live calculation.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Storage & Compute</span>
+                    <span class="text-orange-500 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- HCI IOPS Calculator -->
+            <a class="card rounded-2xl p-6 flex flex-col gap-4" href="IOcalculator.php" data-tags="hci storage analysis" data-name="IOcalculator HCI IOPS Throughput Calculator">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-blue-50 text-blue-600 font-bold text-xl">IO</div>
+                    <span class="category-pill bg-blue-50 text-blue-700">HCI</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">IOcalculator</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Estimate HCI IOPS and throughput using the original Excel calculations, with CPU models from the Sangfor datasheet.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">IOPS & Throughput</span>
+                    <span class="text-blue-600 font-bold text-xs">Open Tool →</span>
+                </div>
+            </a>
+
+            <!-- HCI Online Sizing (INTERNAL) -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='HCISizingTool-v2.php'" data-tags="hci storage" data-name="HCI Online Sizing INTERNAL">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-indigo-50 relative">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1a5 5 0 015 5v2h1a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 015-5zm0 12a2 2 0 100 4 2 2 0 000-4zm0-10a3 3 0 00-3 3v2h6V6a3 3 0 00-3-3z"/></svg>
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="category-pill bg-orange-50 text-orange-600">HCI</span>
+                        <span class="category-pill bg-indigo-50 text-indigo-600">Internal</span>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">HCI Online Sizing <span class="text-indigo-500">(INTERNAL)</span></h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Login-protected HCI sizer with per-user project saving, team directory, and shared inventory management.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-indigo-400 font-medium flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1a5 5 0 015 5v2h1a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h1V6a5 5 0 015-5zm0 12a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                        Login Required
+                    </span>
+                    <span class="text-indigo-600 font-bold text-xs flex items-center gap-1">Sign In
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- HCI Compatibilities List -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='HCL-index.html'" data-tags="hci" data-name="HCI Compatibilities List">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-sky-50">
+                        <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="category-pill bg-orange-50 text-orange-600">HCI</span>
+                        <span class="category-pill bg-sky-50 text-sky-600">HCL</span>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">HCI Compatibilities List</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Search Sangfor HCI hardware &amp; software compatibility database with OCR-powered BOM/BOQ scanning.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-sky-500 font-medium">Compatibility Database</span>
+                    <span class="text-sky-600 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- aStor EDS Sizer -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='astorsizer.html'" data-tags="storage" data-name="aStor EDS Sizer">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-slate-900">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13h-7v7h7v-7zM7 13H4v7h3v-7zM20 4h-7v7h7V4zM7 4H4v7h3V4z"/>
+                        </svg>
+                    </div>
+                    <span class="category-pill bg-slate-100 text-slate-700">Storage</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">aStor EDS Sizer</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Distributed storage planner supporting Dual-Pool (Block & File/Object) with EC redundancy logic.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Hybrid Flash</span>
+                    <span class="text-slate-700 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- VDI Pro Sizer -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='vdisizer.php'" data-tags="compute" data-name="VDI Pro Sizer">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-blue-50">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="category-pill bg-blue-50 text-blue-600">Compute</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">VDI Pro Sizer</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Advanced sizing for Virtual Desktops, vGPU resources, SSD cache ratio, and IOPS requirements.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Virtual Desktop</span>
+                    <span class="text-blue-600 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- RVTools Helper -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='RvToolsPage.html'" data-tags="analysis" data-name="RVTools Helper">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-slate-100">
+                        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <span class="category-pill bg-slate-100 text-slate-600">Analysis</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">RVTools Helper</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Parse and analyze VMware RVTools reports for HCI migration assessment and planning.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">VMware Migration</span>
+                    <span class="text-slate-600 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Smart RV Analyzer -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='smartRVtools.php'" data-tags="analysis hci" data-name="Smart RV Analyzer">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-blue-600">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="category-pill bg-purple-50 text-purple-600">Analysis</span>
+                        <span class="category-pill bg-blue-50 text-blue-600 flex items-center gap-1">
+                            <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm0 2a8 8 0 100 16A8 8 0 0012 4zm1 3v5.585l3.707 3.708-1.414 1.414L11 14.414V7h2z" fill-rule="evenodd"/></svg>
+                            AI
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">Smart RV Analyzer</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">AI-driven HCI sizing suggestions from RVTools Excel ingestion with automated resource mapping.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">AI-Assisted</span>
+                    <span class="text-blue-600 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Backup Calculator -->
+            <div class="card rounded-2xl p-6 flex flex-col gap-4" onclick="location.href='BackupDrCDP.html'" data-tags="backup" data-name="Backup Calculator">
+                <div class="flex items-start justify-between">
+                    <div class="icon-wrap bg-emerald-50">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <span class="category-pill bg-emerald-50 text-emerald-600">Backup</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">Backup Calculator</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">Calculate retention policies, GFS storage sizing, and CDP log requirements for DR planning.</p>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">DR & Backup</span>
+                    <span class="text-emerald-600 font-bold text-xs flex items-center gap-1">Open Tool
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- No results -->
+        <div id="noResults" class="hidden text-center py-20 text-slate-400">
+            <svg class="w-12 h-12 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <p class="font-semibold">No tools match your search</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="max-w-6xl mx-auto px-8 pb-10">
+        <div class="border-t border-slate-200 pt-6 flex items-center justify-between text-xs text-slate-400">
+            <span class="font-semibold">Sangfor Technologies · Presale Sizer Suite</span>
+            <span>Certified Sizing Methodology · v2025</span>
+        </div>
+    </footer>
+
+    <script>
+        let activeTag = 'all';
+
+        function filterByTag(tag) {
+            activeTag = tag;
+
+            // Update pill styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-slate-800', 'text-white');
+                btn.classList.add('bg-slate-100', 'text-slate-600');
+            });
+            event.target.classList.add('active', 'bg-slate-800', 'text-white');
+            event.target.classList.remove('bg-slate-100', 'text-slate-600');
+
+            filterCards();
+        }
+
+        function filterCards() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('#cardGrid .card');
+            let visible = 0;
+
+            cards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const tags = card.dataset.tags;
+                const matchTag = activeTag === 'all' || tags.includes(activeTag);
+                const matchQuery = !query || name.includes(query);
+
+                if (matchTag && matchQuery) {
+                    card.style.display = '';
+                    visible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('noResults').classList.toggle('hidden', visible > 0);
+        }
+    </script>
+
+</body>
+</html>

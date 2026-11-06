@@ -1,0 +1,6 @@
+{
+    "nvmeSizes": [800, 1600, 3200, 6400],
+    "specialBayOverhead": 4,
+    "platformOverheadPerNodeGB": 27,
+    "notes": "NVMe disks for Sangfor Memory Tiering (Tier 1 - Cold Tier). On aServer-family platforms, the NVMe special bay reserves 4 standard disk slots per node. Platform overhead = 27 GB physical RAM per node, reserved for the HCI platform itself (not usable by Memory Tiering VMs)."
+}

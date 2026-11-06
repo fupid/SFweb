@@ -1,0 +1,4158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sangfor Admin Panel - HCI Configuration Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Professional Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ==================== LOGIN STYLES ==================== */
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .login-body {
+            padding: 40px 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.9rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            padding-right: 45px; /* Space for password toggle */
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+            font-family: inherit;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
+            outline: none;
+            border-color: #1a73e8;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+        }
+
+        .form-group input[type="text"]:hover,
+        .form-group input[type="password"]:hover {
+            border-color: #cbd5e1;
+        }
+
+        /* Input validation states */
+        .form-group input:invalid:not(:placeholder-shown) {
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .form-group input:valid:not(:placeholder-shown) {
+            border-color: #86efac;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 38px; /* Better positioned below label */
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: #1a73e8;
+            background: #eff6ff;
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid #1a73e8;
+            outline-offset: 2px;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:focus {
+            outline: 3px solid rgba(26, 115, 232, 0.5);
+            outline-offset: 2px;
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+            margin-top: 10px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .login-error.active {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-error::before {
+            content: '\f06a'; /* Font Awesome exclamation-circle */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 1.2rem;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .login-footer a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ==================== DASHBOARD STYLES ==================== */
+        .dashboard-wrapper {
+            display: none;
+            width: 100%;
+            max-width: 1600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-height: 90vh;
+        }
+
+        .dashboard-wrapper.active {
+            display: flex;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.6rem;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-btn:active {
+            transform: translateY(0);
+        }
+
+        .header-btn:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.8);
+            outline-offset: 2px;
+        }
+
+        .header-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-menu-item {
+            margin: 0;
+        }
+
+        .nav-menu-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .nav-menu-btn:hover::before {
+            left: 100%;
+        }
+
+        .nav-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-menu-btn:visited {
+            color: white;
+        }
+
+        .nav-menu-btn.active {
+            background: rgba(255, 255, 255, 0.95);
+            color: #1a73e8;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .nav-menu-btn.active:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .nav-menu-btn .icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-menu-btn:hover .icon {
+            transform: scale(1.1);
+        }
+
+        .nav-menu-btn:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.8);
+            outline-offset: 2px;
+        }
+
+        .dashboard-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ==================== RESPONSIVE DESIGN ==================== */
+        @media (max-width: 1200px) {
+            .nav-menu-btn {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 10px 15px;
+            }
+
+            .header-top h1 {
+                font-size: 1.2rem;
+            }
+
+            .header-nav {
+                overflow-x: auto;
+                flex-wrap: wrap;
+            }
+
+            .nav-menu {
+                width: 100%;
+            }
+
+            .nav-menu-btn {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+                flex: 1 0 auto;
+                min-width: 120px;
+                justify-content: center;
+            }
+
+            .nav-menu-btn .icon {
+                font-size: 1rem;
+            }
+
+            .header-btn {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .dashboard-content {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-top {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .nav-menu {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .nav-menu-btn {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .dashboard-header {
+                padding: 10px;
+            }
+        }
+
+        .dashboard-content {
+            width: 100%;
+            padding: 30px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+
+        .dashboard-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+
+        /* All sections visible in single-scroll layout */
+        .tab-content {
+            display: block;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab-content:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-divider {
+            border-top: 2px solid #1a73e8;
+            margin: 40px 0;
+        }
+
+        /* Smooth scrolling for anchor navigation */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Dashboard section styling */
+        .dashboard-overview {
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-overview h2 {
+            margin: 0 0 20px 0;
+            font-size: 2rem;
+        }
+
+        .dashboard-overview p {
+            margin: 0 0 20px 0;
+            opacity: 0.95;
+        }
+
+        .dashboard-overview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .dashboard-stat-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .dashboard-stat-item .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-stat-item .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 18px;
+            border-bottom: 3px solid transparent;
+            background: linear-gradient(to right, #e5e7eb 0%, transparent 100%) bottom no-repeat;
+            background-size: 100% 3px;
+            position: relative;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 120px;
+            height: 3px;
+            background: linear-gradient(90deg, #1a73e8, #7c3aed);
+            border-radius: 2px;
+        }
+
+        .section-header h2 {
+            font-size: 1.6rem;
+            color: #1f2937;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 32px;
+            background: linear-gradient(135deg, #1a73e8, #7c3aed);
+            border-radius: 3px;
+        }
+
+        .action-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .action-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .action-btn:hover {
+            background: #155bb5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 115, 232, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn:focus {
+            outline: 3px solid rgba(26, 115, 232, 0.4);
+            outline-offset: 2px;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-btn.success {
+            background: #22c55e;
+        }
+
+        .action-btn.success:hover {
+            background: #16a34a;
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .action-btn.danger {
+            background: #ef4444;
+        }
+
+        .action-btn.danger:hover {
+            background: #dc2626;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: #6b7280;
+        }
+
+        .action-btn.secondary:hover {
+            background: #4b5563;
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.3);
+        }
+
+        /* ==================== TABLE STYLES ==================== */
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+            padding: 18px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid #cbd5e1;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #374151;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Table row striping for better readability */
+        .data-table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .data-table tbody tr:nth-child(odd) {
+            background: white;
+        }
+
+        .data-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: #eff6ff !important;
+            transform: scale(1.005);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .data-table tbody tr:hover td {
+            color: #1f2937;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ==================== CARD STYLES ==================== */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h3 {
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 12px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .card h3::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: #7c3aed;
+        }
+
+        /* ==================== MODAL STYLES ==================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeInOverlay 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #1f2937;
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            background: #f3f4f6;
+            border: none;
+            font-size: 1.5rem;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #fee2e2;
+            color: #ef4444;
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .modal-close:active {
+            transform: rotate(90deg) scale(0.95);
+        }
+
+        .modal-close:focus {
+            outline: 2px solid #ef4444;
+            outline-offset: 2px;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .modal-form .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .modal-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .modal-form input[type="text"],
+        .modal-form input[type="number"],
+        .modal-form select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+        }
+
+        .modal-form input[type="text"]:hover,
+        .modal-form input[type="number"]:hover,
+        .modal-form select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .modal-form input[type="text"]:focus,
+        .modal-form input[type="number"]:focus,
+        .modal-form select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            background: #fafbfc;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+        }
+
+        .modal-form input:invalid:not(:placeholder-shown) {
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .modal-form input:valid:not(:placeholder-shown) {
+            border-color: #86efac;
+        }
+
+        .modal-form .form-section {
+            grid-column: 1 / -1;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            margin-top: 5px;
+        }
+
+        .modal-form .form-section h4 {
+            color: #1a73e8;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .modal-form .form-section .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        /* ==================== MESSAGE STYLES ==================== */
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .message.active {
+            display: block;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .message.warning {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+        }
+
+        /* ==================== LIMITS MATRIX STYLES ==================== */
+        .limits-matrix {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .limits-matrix table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .limits-matrix th,
+        .limits-matrix td {
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .limits-matrix th {
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .limits-matrix td input {
+            width: 100%;
+            min-width: 70px;
+            padding: 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: white;
+            font-family: inherit;
+        }
+
+        .limits-matrix td input:hover {
+            border-color: #94a3b8;
+        }
+
+        .limits-matrix td input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            background: #fafbfc;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.15);
+        }
+
+        .limits-matrix td input:invalid {
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .limits-matrix .model-name {
+            text-align: left;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* ==================== BUTTON GROUP STYLES ==================== */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon.edit {
+            background: #dbeafe;
+            color: #1a73e8;
+        }
+
+        .btn-icon.edit:hover {
+            background: #bfdbfe;
+            transform: scale(1.1);
+        }
+
+        .btn-icon.edit:focus {
+            outline: 2px solid #1a73e8;
+            outline-offset: 2px;
+        }
+
+        .btn-icon.delete {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .btn-icon.delete:hover {
+            background: #fecaca;
+            transform: scale(1.1);
+        }
+
+        .btn-icon.delete:focus {
+            outline: 2px solid #ef4444;
+            outline-offset: 2px;
+        }
+
+        /* ==================== RESPONSIVE STYLES ==================== */
+        @media (max-width: 1024px) {
+            .dashboard-sidebar {
+                width: 220px;
+            }
+            
+            .modal {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .dashboard-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .sidebar-menu {
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            
+            .sidebar-menu-item {
+                margin: 0 5px;
+                flex-shrink: 0;
+            }
+            
+            .sidebar-menu-btn {
+                padding: 10px 15px;
+                white-space: nowrap;
+            }
+            
+            .modal-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-form .form-section .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+
+        /* ==================== STATS CARDS ==================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #1a73e8;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(26, 115, 232, 0.1) 0%, transparent 70%);
+            transition: all 0.5s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-left-width: 6px;
+        }
+
+        .stat-card:hover::before {
+            top: -25%;
+            right: -25%;
+        }
+
+        .stat-card h4 {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card .value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #1a73e8;
+            position: relative;
+            z-index: 1;
+            line-height: 1.2;
+        }
+
+        /* ==================== CONFIRM DIALOG ==================== */
+        .confirm-dialog {
+            text-align: center;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 25px;
+            color: #4b5563;
+            font-size: 1rem;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* ==================== IMPORT/EXPORT SECTION ==================== */
+        .import-export-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .import-export-section h3 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .file-input-wrapper input[type="file"]:focus {
+            outline: none;
+            border-color: #1a73e8;
+        }
+
+        .info-badges {
+            display: inline-flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .info-badge {
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+            color: #1a73e8;
+            border: 1px solid rgba(26, 115, 232, 0.2);
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .info-badge:hover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #c7d2fe 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(26, 115, 232, 0.2);
+        }
+    </style>
+    <!-- Loading Indicator Styles Added -->
+    <style>
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeInOverlay 0.2s ease;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 300px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+            background: white;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        .toast.success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast.info {
+            border-left: 4px solid #1a73e8;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .toast-close:hover {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Enhanced Button States */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            padding: 8px 12px;
+            background: #1f2937;
+            color: white;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            margin-bottom: -5px;
+        }
+
+        .tooltip:hover::before,
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        /* Enhanced Form Styles */
+        .form-required::before {
+            content: '*';
+            color: #ef4444;
+            margin-right: 4px;
+            font-weight: 700;
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #6b7280;
+        }
+
+        .empty-state-description {
+            font-size: 0.9rem;
+        }
+
+        /* Enhanced Table Styles - already applied above, keeping this section for additional enhancements */
+        .data-table {
+            position: relative;
+        }
+
+        .data-table::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #1a73e8, #7c3aed);
+        }
+
+        /* Add sorting indicator styles */
+        .data-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .data-table th.sortable:hover {
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+        }
+
+        .data-table th.sortable::after {
+            content: '\f0dc'; /* Font Awesome sort icon */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 10px;
+            opacity: 0.3;
+            font-size: 0.8rem;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Enhanced Card Hover */
+        .card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+            border-color: rgba(26, 115, 232, 0.1);
+        }
+
+        .card:hover h3 {
+            color: #1a73e8;
+        }
+
+        /* Search/Filter Input */
+        .search-input {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input input {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+        }
+
+        .search-input::before {
+            content: '🔍';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            color: #9ca3af;
+        }
+
+        /* Progress Indicator */
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1a73e8, #7c3aed);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* ==================== ADDITIONAL UX ENHANCEMENTS ==================== */
+        
+        /* Selection Highlight */
+        ::selection {
+            background: rgba(26, 115, 232, 0.3);
+            color: #1f2937;
+        }
+
+        ::-moz-selection {
+            background: rgba(26, 115, 232, 0.3);
+            color: #1f2937;
+        }
+
+        /* Link Styles */
+        a {
+            color: #1a73e8;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            color: #155bb5;
+        }
+
+        /* Disabled State for All Buttons */
+        button:disabled,
+        .action-btn:disabled,
+        .header-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Improved Focus Visible for Accessibility */
+        *:focus-visible {
+            outline: 3px solid rgba(26, 115, 232, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* Dashboard Overview Stats Enhancement */
+        .dashboard-stat-item {
+            cursor: default;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-stat-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        /* Message Enhancement with Icons */
+        .message.success::before {
+            content: '\f058'; /* Font Awesome check-circle */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .message.error::before {
+            content: '\f06a'; /* Font Awesome exclamation-circle */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .message.warning::before {
+            content: '\f071'; /* Font Awesome exclamation-triangle */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .message {
+            display: flex;
+            align-items: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        /* Section Divider Enhancement */
+        .section-divider {
+            border-top: 2px solid transparent;
+            margin: 50px 0;
+            position: relative;
+            background: linear-gradient(to right, transparent 0%, #cbd5e1 50%, transparent 100%) top no-repeat;
+            background-size: 100% 2px;
+        }
+
+        .section-divider::after {
+            content: '◆';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f9fafb;
+            color: #1a73e8;
+            padding: 0 15px;
+            font-size: 1.2rem;
+        }
+
+        /* Loading Spinner Enhancement */
+        .loading-spinner {
+            border-width: 5px;
+            position: relative;
+        }
+
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            margin: -15px 0 0 -15px;
+            border: 3px solid transparent;
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            animation-direction: reverse;
+        }
+
+        /* File Input Enhancement */
+        input[type="file"] {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: #1a73e8 !important;
+            background: white !important;
+        }
+
+        /* Table Action Buttons Group */
+        .btn-group {
+            gap: 12px;
+        }
+
+        /* Quick Action Links */
+        .action-btn[href] {
+            text-decoration: none;
+        }
+
+        /* Dashboard Overview Gradient Animation */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .dashboard-overview {
+            background: linear-gradient(135deg, #1a73e8 0%, #7c3aed 50%, #1a73e8 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        /* Responsive Table Wrapper */
+        @media (max-width: 768px) {
+            .data-table {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .data-table table {
+                min-width: 600px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .section-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .btn-group {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Empty State Enhancement */
+        .empty-state {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Modal Animation Enhancement */
+        .modal-overlay.active .modal {
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(50px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Stats Grid Responsive */
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-overview-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Improved Header User Info */
+        #currentUser {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== TOAST CONTAINER ==================== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ==================== LOADING OVERLAY ==================== -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div style="text-align: center;">
+            <div class="loading-spinner"></div>
+            <p class="loading-text" id="loadingText">Loading...</p>
+        </div>
+    </div>
+
+    <!-- ==================== LOGIN SCREEN ==================== -->
+    <div id="loginScreen" class="login-wrapper">
+        <div class="login-header">
+            <h1>🔐 Admin Panel</h1>
+            <p>Sangfor HCI Configuration Management</p>
+        </div>
+        <div class="login-body">
+            <form id="loginForm" class="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginUsername" class="form-required">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter your username" required autocomplete="username">
+                    <span class="form-hint">Default: admin</span>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword" class="form-required">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">👁️</button>
+                    <span class="form-hint">Default: admin123</span>
+                </div>
+                <button type="submit" class="login-btn">Login to Dashboard</button>
+            </form>
+            <div id="loginError" class="login-error">
+                Invalid username or password. Please try again.
+            </div>
+            <div class="login-footer">
+                <a href="Index.html">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div id="dashboard" class="dashboard-wrapper">
+        <div class="dashboard-header">
+            <div class="header-top">
+                <h1>⚙️ Admin Dashboard</h1>
+                <div class="header-actions">
+                    <span id="currentUser" style="margin-right: 15px; opacity: 0.9;"></span>
+                    <button class="header-btn" onclick="showSyncStatus()">
+                        🔄 Sync Status
+                    </button>
+                    <button class="header-btn" onclick="logout()">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+            <!-- Navigation Menu (Anchor Links for Single-Scroll) -->
+            <nav class="header-nav">
+                <ul class="nav-menu">
+                    <li class="nav-menu-item">
+                        <a href="#section-dashboard" class="nav-menu-btn active">
+                            <span class="icon">📊</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-menu-item">
+                        <a href="#section-serverModels" class="nav-menu-btn">
+                            <span class="icon">🖥️</span>
+                            Server Models
+                        </a>
+                    </li>
+                    <li class="nav-menu-item">
+                        <a href="#section-components" class="nav-menu-btn">
+                            <span class="icon">🔧</span>
+                            Components
+                        </a>
+                    </li>
+                    <li class="nav-menu-item">
+                        <a href="#section-hardwareLimits" class="nav-menu-btn">
+                            <span class="icon">📈</span>
+                            Hardware Limits
+                        </a>
+                    </li>
+                    <li class="nav-menu-item">
+                        <a href="#section-systemSettings" class="nav-menu-btn">
+                            <span class="icon">⚙️</span>
+                            System Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="dashboard-container">
+            <!-- Content Area -->
+            <div class="dashboard-content">
+                <!-- Admin Dashboard Overview Section (NEW - TOP) -->
+                <div id="section-dashboard" class="tab-content">
+                    <div class="dashboard-overview">
+                        <h2>📊 Admin Dashboard Overview</h2>
+                        <p>Central management console for HCI Configuration System. Monitor your inventory and manage configurations.</p>
+                        <div class="dashboard-overview-stats">
+                            <div class="dashboard-stat-item">
+                                <div class="label">Total Server Models</div>
+                                <div class="value" id="overviewTotalServerModels">0</div>
+                            </div>
+                            <div class="dashboard-stat-item">
+                                <div class="label">Memory Modules</div>
+                                <div class="value" id="overviewMemoryModules">0</div>
+                            </div>
+                            <div class="dashboard-stat-item">
+                                <div class="label">Storage Components</div>
+                                <div class="value" id="overviewStorageComponents">0</div>
+                            </div>
+                            <div class="dashboard-stat-item">
+                                <div class="label">Network Items</div>
+                                <div class="value" id="overviewNetworkItems">3</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <div class="card">
+                        <h3>🎯 Quick Actions</h3>
+                        <div class="btn-group">
+                            <a href="#section-serverModels" class="action-btn">Manage Server Models</a>
+                            <a href="#section-components" class="action-btn">Manage Components</a>
+                            <a href="#section-hardwareLimits" class="action-btn">Configure Limits</a>
+                            <a href="#section-systemSettings" class="action-btn">System Settings</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Server Model Management Section (MOVED BELOW DASHBOARD) -->
+                <div id="section-serverModels" class="tab-content">
+                    <div class="section-header">
+                        <h2>🖥️ Server Model Management</h2>
+                        <div class="btn-group">
+                            <button class="action-btn success" onclick="showAddServerModal()">
+                                ➕ Add New Model
+                            </button>
+                            <button class="action-btn secondary" onclick="exportServerData()">
+                                📥 Export JSON
+                            </button>
+                            <button class="action-btn secondary" onclick="document.getElementById('importServerFile').click()">
+                                📤 Import JSON
+                            </button>
+                            <input type="file" id="importServerFile" accept=".json" style="display: none;" onchange="importServerData(event)">
+                        </div>
+                    </div>
+
+                    <div id="serverMessage" class="message"></div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Total Models</h4>
+                            <div class="value" id="totalServerModels">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Active Models</h4>
+                            <div class="value" id="activeServerModels">0</div>
+                        </div>
+                    </div>
+
+                    <div class="data-table">
+                        <table id="serverTable">
+                            <thead>
+                                <tr>
+                                    <th>Model ID</th>
+                                    <th>Model Name</th>
+                                    <th>CPU Sockets</th>
+                                    <th>CPU Cores</th>
+                                    <th>Frequency (GHz)</th>
+                                    <th>RAM Default</th>
+                                    <th>RAM Max</th>
+                                    <th>Disk Slots</th>
+                                    <th>NIC 10GE</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="serverTableBody">
+                                <!-- Server models will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Component Specs Section -->
+                <div id="section-components" class="tab-content">
+                    <div class="section-header">
+                        <h2>🔧 Component Specifications</h2>
+                        <div class="btn-group">
+                            <button class="action-btn secondary" onclick="exportComponentData()">
+                                📥 Export JSON
+                            </button>
+                            <button class="action-btn secondary" onclick="document.getElementById('importComponentFile').click()">
+                                📤 Import JSON
+                            </button>
+                            <input type="file" id="importComponentFile" accept=".json" style="display: none;" onchange="importComponentData(event)">
+                        </div>
+                    </div>
+
+                    <div id="componentMessage" class="message"></div>
+
+                    <!-- Memory Modules -->
+                    <div class="card">
+                        <h3>💾 Memory Modules</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="action-btn success" onclick="showAddComponentModal('memory')">
+                                ➕ Add Memory Module
+                            </button>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Capacity (GB)</th>
+                                        <th>Name</th>
+                                        <th>Part Number</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="memoryTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SSD Drives -->
+                    <div class="card">
+                        <h3>💿 SSD Drives (Cache)</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="action-btn success" onclick="showAddComponentModal('ssd')">
+                                ➕ Add SSD Drive
+                            </button>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Capacity (GB)</th>
+                                        <th>Name</th>
+                                        <th>Part Number</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ssdTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SAS HDDs -->
+                    <div class="card">
+                        <h3>💽 SAS HDDs (Capacity)</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="action-btn success" onclick="showAddComponentModal('sas')">
+                                ➕ Add SAS HDD
+                            </button>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Capacity (GB)</th>
+                                        <th>Name</th>
+                                        <th>Part Number</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sasTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SATA HDDs -->
+                    <div class="card">
+                        <h3>💽 SATA HDDs (Capacity)</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="action-btn success" onclick="showAddComponentModal('sata')">
+                                ➕ Add SATA HDD
+                            </button>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Capacity (GB)</th>
+                                        <th>Name</th>
+                                        <th>Part Number</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sataTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Network Components -->
+                    <div class="card">
+                        <h3>🌐 Network Components</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="action-btn success" onclick="showAddComponentModal('network')">
+                                ➕ Add Network Component
+                            </button>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Part Number</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="networkTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Hardware Limits Section -->
+                <div id="section-hardwareLimits" class="tab-content">
+                    <div class="section-header">
+                        <h2>📊 Hardware Module Limits</h2>
+                        <div class="btn-group">
+                            <button class="action-btn success" onclick="saveLimits()">
+                                💾 Save Changes
+                            </button>
+                            <button class="action-btn secondary" onclick="resetToDefaults()">
+                                🔄 Reset to Defaults
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="limitsMessage" class="message"></div>
+
+                    <div class="card">
+                        <h3>Limits Configuration</h3>
+                        <p style="color: #6b7280; margin-bottom: 20px;">
+                            Configure maximum hardware module limits per server model. These limits are used for validation in the HCI Sizing Tool. <strong>Changes are saved automatically when using Ctrl+S</strong>.
+                        </p>
+                        <div class="limits-matrix">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Server Model</th>
+                                        <th>Max CPU Sockets</th>
+                                        <th>Max Cores per Socket</th>
+                                        <th>Max SSD Cache (GB)</th>
+                                        <th>Max HDD Storage (GB)</th>
+                                        <th>Max RAM Modules</th>
+                                        <th>Max Network Cards</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="limitsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- System Settings Section -->
+                <div id="section-systemSettings" class="tab-content">
+                    <div class="section-header">
+                        <h2>⚙️ System Settings</h2>
+                    </div>
+
+                    <div id="settingsMessage" class="message"></div>
+
+                    <div class="card">
+                        <h3>System Information</h3>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                            <div>
+                                <strong>Application Version:</strong>
+                                <p id="appVersion">1.0.0</p>
+                            </div>
+                            <div>
+                                <strong>Last Update:</strong>
+                                <p id="lastUpdate">-</p>
+                            </div>
+                            <div>
+                                <strong>Data Sync Status:</strong>
+                                <p id="syncStatus">Active</p>
+                            </div>
+                            <div>
+                                <strong>Configuration Size:</strong>
+                                <p id="configSize">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="import-export-section">
+                        <h3>Backup & Restore</h3>
+                        <p style="color: #6b7280; margin-bottom: 20px;">
+                            Export all configuration data or restore from a previously exported file. This includes server models, component specs, and hardware limits.
+                        </p>
+                        <div class="btn-group">
+                            <button class="action-btn success" onclick="exportAllData()">
+                                📥 Export All Data
+                            </button>
+                            <button class="action-btn" onclick="document.getElementById('importAllFile').click()">
+                                📤 Import All Data
+                            </button>
+                            <input type="file" id="importAllFile" accept=".json" style="display: none;" onchange="importAllData(event)">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Danger Zone</h3>
+                        <p style="color: #6b7280; margin-bottom: 15px;">
+                            These actions are irreversible. Please proceed with caution.
+                        </p>
+                        <div class="btn-group">
+                            <button class="action-btn danger" onclick="confirmResetFactory()">
+                                ⚠️ Reset to Factory Defaults
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+    
+    <!-- Add/Edit Server Model Modal -->
+    <div id="serverModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="serverModalTitle">Add Server Model</h3>
+                <button class="modal-close" onclick="closeServerModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="serverForm" class="modal-form">
+                    <input type="hidden" id="serverModelId">
+                    
+                    <div class="form-group full-width">
+                        <label for="serverName" class="form-required">Model Name</label>
+                        <input type="text" id="serverName" placeholder="e.g., aServer-3500" required>
+                        <span class="form-hint">Enter a unique identifier for this server model</span>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>⚡ CPU Configuration</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="serverSockets" class="form-required">Sockets</label>
+                                <input type="number" id="serverSockets" min="1" max="4" required>
+                                <span class="form-hint">Number of CPU sockets (1-4)</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverCores" class="form-required">Cores per Socket</label>
+                                <input type="number" id="serverCores" min="4" max="128" required>
+                                <span class="form-hint">Physical cores per socket (4-128)</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverFreq" class="form-required">Base Frequency (GHz)</label>
+                                <input type="number" id="serverFreq" step="0.1" min="1.0" max="5.0" required>
+                                <span class="form-hint">Base CPU frequency in GHz</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>💾 Memory Configuration</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="serverRamDefault" class="form-required">Default RAM (GB)</label>
+                                <input type="number" id="serverRamDefault" min="32" max="4096" required>
+                                <span class="form-hint">Default memory configuration</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverRamMax" class="form-required">Maximum RAM (GB)</label>
+                                <input type="number" id="serverRamMax" min="128" max="8192" required>
+                                <span class="form-hint">Maximum supported memory</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverRamSlots">RAM Slots</label>
+                                <input type="number" id="serverRamSlots" min="8" max="48" value="24">
+                                <span class="form-hint">Total available RAM slots</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>💿 Storage Configuration</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="serverDiskSlots" class="form-required">Total Disk Slots</label>
+                                <input type="number" id="serverDiskSlots" min="1" max="48" required>
+                                <span class="form-hint">Number of drive bays available</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverMaxSSD">Max SSD Cache (GB)</label>
+                                <input type="number" id="serverMaxSSD" min="0" max="20000" step="100" value="15200">
+                                <span class="form-hint">Maximum SSD cache capacity</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverMaxHDD">Max HDD Storage (GB)</label>
+                                <input type="number" id="serverMaxHDD" min="0" max="500000" step="1000" value="48000">
+                                <span class="form-hint">Maximum HDD capacity supported</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>🌐 Network Configuration</h4>
+                        <div class="form-grid">
+                            <div class="form-group tooltip" data-tooltip="High-speed network ports for virtualization traffic">
+                                <label for="serverNic10GE" class="form-required">10GE Ports</label>
+                                <input type="number" id="serverNic10GE" min="0" max="10" required>
+                                <span class="form-hint">10 Gigabit Ethernet ports</span>
+                            </div>
+                            <div class="form-group tooltip" data-tooltip="Standard Ethernet ports for management">
+                                <label for="serverNicGE" class="form-required">GE Ports</label>
+                                <input type="number" id="serverNicGE" min="0" max="10" required>
+                                <span class="form-hint">1 Gigabit Ethernet ports</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="serverPciSlots">PCI Slots</label>
+                                <input type="number" id="serverPciSlots" min="1" max="10" value="2">
+                                <span class="form-hint">Available expansion slots</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="serverPartNumber">Part Number</label>
+                        <input type="text" id="serverPartNumber" placeholder="e.g., PENDING-SVR-3500">
+                        <span class="form-hint">Manufacturer part number (optional)</span>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="serverDescription">Description</label>
+                        <input type="text" id="serverDescription" placeholder="Brief description of the server model">
+                        <span class="form-hint">Optional description for this model</span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn secondary" onclick="closeServerModal()">Cancel</button>
+                <button class="action-btn success" onclick="saveServerModel()">Save Model</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Component Modal -->
+    <div id="componentModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="componentModalTitle">Add Component</h3>
+                <button class="modal-close" onclick="closeComponentModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="componentForm">
+                    <input type="hidden" id="componentType">
+                    <input type="hidden" id="componentId">
+                    
+                    <div class="form-group full-width">
+                        <label for="componentCategory" class="form-required">Component Type</label>
+                        <select id="componentCategory" onchange="updateComponentFormFields()" required style="margin-bottom: 20px;">
+                            <option value="">Select component type...</option>
+                            <option value="memory">💾 Memory Module</option>
+                            <option value="ssd">💿 SSD Drive (Cache)</option>
+                            <option value="sas">💽 SAS HDD (Capacity)</option>
+                            <option value="sata">💽 SATA HDD (Capacity)</option>
+                            <option value="network">🌐 Network Component</option>
+                        </select>
+                        <span class="form-hint">Choose the type of component you want to add or edit</span>
+                    </div>
+
+                    <div id="componentFormFields" class="modal-form">
+                        <!-- Dynamic fields will be populated based on component type -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn secondary" onclick="closeComponentModal()">Cancel</button>
+                <button class="action-btn success" onclick="saveComponent()">Save Component</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>⚠️ Confirm Delete</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-dialog">
+                    <p id="deleteMessage">Are you sure you want to delete this item? This action cannot be undone.</p>
+                    <div class="confirm-buttons">
+                        <button class="action-btn secondary" onclick="closeDeleteModal()">Cancel</button>
+                        <button class="action-btn danger" id="confirmDeleteBtn">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DEFAULT DATA ====================
+        const DEFAULT_SERVER_MODELS = {
+            'aServer-3000': { name: 'Sangfor aServer-3000', partNumber: 'PENDING-SVR-3000', socket: 1, core: 12, frequency: 2.1, ramDefault: 128, ramMax: 512, diskSlots: 7, nicGE: 4, nic10GE: 2, pciSlots: 1, ramSlots: 16, maxSSD: 9600, maxHDD: 8400, maxRAMModules: 16, maxNetworkCards: 4, description: 'Entry-level server' },
+            'aServer-3100': { name: 'Sangfor aServer-3100', partNumber: 'PENDING-SVR-3100', socket: 1, core: 16, frequency: 2.9, ramDefault: 128, ramMax: 512, diskSlots: 7, nicGE: 4, nic10GE: 2, pciSlots: 1, ramSlots: 16, maxSSD: 9600, maxHDD: 8400, maxRAMModules: 16, maxNetworkCards: 4, description: 'Single socket high performance' },
+            'aServer-3205': { name: 'Sangfor aServer-3205', partNumber: 'PENDING-SVR-3205', socket: 2, core: 16, frequency: 2.4, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: 'Dual socket mid-range' },
+            'aServer-3305': { name: 'Sangfor aServer-3305', partNumber: 'PENDING-SVR-3305', socket: 2, core: 16, frequency: 2.9, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: 'High frequency dual socket' },
+            'aServer-3405': { name: 'Sangfor aServer-3405', partNumber: 'PENDING-SVR-3405', socket: 2, core: 24, frequency: 2.1, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: 'High core count balanced server' },
+            'aServer-3305F': { name: 'Sangfor aServer-3305F', partNumber: 'PENDING-SVR-3305F', socket: 2, core: 16, frequency: 2.9, ramDefault: 128, ramMax: 1024, diskSlots: 24, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 30400, maxHDD: 72000, maxRAMModules: 24, maxNetworkCards: 6, description: 'High density storage server' },
+            'aServer-3405(648)': { name: 'Sangfor aServer-3405(648)', partNumber: 'PENDING-SVR-3405-648', socket: 2, core: 28, frequency: 2.6, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: '648 memory variant' },
+            'aServer-3405(860)': { name: 'Sangfor aServer-3405(860)', partNumber: 'PENDING-SVR-3405-860', socket: 2, core: 36, frequency: 2.4, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: '860 memory variant high core' },
+            'aServer-X5-2205': { name: 'Sangfor aServer-X5-2205', partNumber: 'PENDING-SVR-X5-2205', socket: 2, core: 16, frequency: 2.8, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: 'X5 series entry' },
+            'aServer-X5-2305P': { name: 'Sangfor aServer-X5-2305P', partNumber: 'PENDING-SVR-X5-2305P', socket: 2, core: 32, frequency: 2.1, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: 'High core X5 platform' },
+            'aServer-X5-2405': { name: 'Sangfor aServer-X5-2405', partNumber: 'PENDING-SVR-X5-2405', socket: 2, core: 32, frequency: 2.8, ramDefault: 128, ramMax: 1024, diskSlots: 12, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6, description: 'X5 high-performance platform' },
+            'aServer-X5-G2200': { name: 'Sangfor aServer-X5-G2200', partNumber: 'PENDING-SVR-X5-G2200', socket: 2, core: 16, frequency: 2.8, ramDefault: 128, ramMax: 1024, diskSlots: 10, nicGE: 4, nic10GE: 2, pciSlots: 3, ramSlots: 24, maxSSD: 15200, maxHDD: 40000, maxRAMModules: 24, maxNetworkCards: 8, description: 'X5 GPU-capable platform' },
+            'VDS-W-G530': { name: 'Sangfor VDS-W-G530', partNumber: 'PENDING-SVR-W-G530', socket: 2, core: 16, frequency: 3.1, ramDefault: 128, ramMax: 1024, diskSlots: 8, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 32000, maxRAMModules: 24, maxNetworkCards: 6, description: 'VDS series Gen5' },
+            'VDS-W-G630': { name: 'Sangfor VDS-W-G630', partNumber: 'PENDING-SVR-W-G630', socket: 2, core: 8, frequency: 3.6, ramDefault: 128, ramMax: 1024, diskSlots: 8, nicGE: 4, nic10GE: 2, pciSlots: 2, ramSlots: 24, maxSSD: 15200, maxHDD: 32000, maxRAMModules: 24, maxNetworkCards: 6, description: 'VDS series Gen6 compact' }
+        };
+
+        const DEFAULT_COMPONENTS = {
+            memory: {
+                64: { name: '64GB DDR4 ECC DIMM', partNumber: 'PENDING-RAM-64GB', category: 'Memory', unit: 'EA' },
+                128: { name: '128GB DDR4 ECC DIMM', partNumber: 'PENDING-RAM-128GB', category: 'Memory', unit: 'EA' },
+                256: { name: '256GB DDR4 ECC DIMM', partNumber: 'PENDING-RAM-256GB', category: 'Memory', unit: 'EA' },
+                384: { name: '384GB DDR4 ECC DIMM (3x 128GB)', partNumber: 'PENDING-RAM-384GB', category: 'Memory', unit: 'EA' },
+                640: { name: '640GB DDR4 ECC DIMM (5x 128GB)', partNumber: 'PENDING-RAM-640GB', category: 'Memory', unit: 'EA' },
+                896: { name: '896GB DDR4 ECC DIMM (7x 128GB)', partNumber: 'PENDING-RAM-896GB', category: 'Memory', unit: 'EA' }
+            },
+            storage: {
+                ssd: {
+                    480: { name: '480GB SSD SATA', partNumber: 'PENDING-SSD-480GB', category: 'Storage', unit: 'EA' },
+                    960: { name: '960GB SSD SATA', partNumber: 'PENDING-SSD-960GB', category: 'Storage', unit: 'EA' },
+                    1900: { name: '1.9TB SSD SATA', partNumber: 'PENDING-SSD-1900GB', category: 'Storage', unit: 'EA' },
+                    3800: { name: '3.8TB SSD SATA', partNumber: 'PENDING-SSD-3800GB', category: 'Storage', unit: 'EA' },
+                    7600: { name: '7.6TB SSD SATA (Read-Intensive)', partNumber: 'PENDING-SSD-7600GB', category: 'Storage', unit: 'EA' }
+                },
+                sas: {
+                    1200: { name: '1.2TB SAS HDD', partNumber: 'PENDING-SAS-1.2TB', category: 'Storage', unit: 'EA' },
+                    1800: { name: '1.8TB SAS HDD', partNumber: 'PENDING-SAS-1.8TB', category: 'Storage', unit: 'EA' },
+                    2400: { name: '2.4TB SAS HDD', partNumber: 'PENDING-SAS-2.4TB', category: 'Storage', unit: 'EA' },
+                    4000: { name: '4TB SAS HDD', partNumber: 'PENDING-SAS-4TB', category: 'Storage', unit: 'EA' }
+                },
+                sata: {
+                    4000: { name: '4TB SATA HDD', partNumber: 'PENDING-SATA-4TB', category: 'Storage', unit: 'EA' },
+                    6000: { name: '6TB SATA HDD', partNumber: 'PENDING-SATA-6TB', category: 'Storage', unit: 'EA' },
+                    8000: { name: '8TB SATA HDD', partNumber: 'PENDING-SATA-8TB', category: 'Storage', unit: 'EA' },
+                    10000: { name: '10TB SATA HDD', partNumber: 'PENDING-SATA-10TB', category: 'Storage', unit: 'EA' },
+                    12000: { name: '12TB SATA HDD', partNumber: 'PENDING-SATA-12TB', category: 'Storage', unit: 'EA' }
+                }
+            },
+            network: {
+                nic10ge: { name: '10GE Network Card (2 ports)', partNumber: 'PENDING-NIC-10GE', category: 'Network', unit: 'EA' },
+                sfp: { name: 'SFP+ 10GE Multimode Transceiver', partNumber: 'PENDING-SFP-MODULE', category: 'Network', unit: 'EA' },
+                hba16gb: { name: 'HBA Card 16Gb FC', partNumber: 'PENDING-HBA-16GB', category: 'Network', unit: 'EA' }
+            }
+        };
+
+        const DEFAULT_LIMITS = {
+            'aServer-3000': { maxSockets: 1, maxCores: 12, maxSSD: 9600, maxHDD: 8400, maxRAMModules: 16, maxNetworkCards: 4 },
+            'aServer-3100': { maxSockets: 1, maxCores: 16, maxSSD: 9600, maxHDD: 8400, maxRAMModules: 16, maxNetworkCards: 4 },
+            'aServer-3205': { maxSockets: 2, maxCores: 16, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-3305': { maxSockets: 2, maxCores: 16, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-3405': { maxSockets: 2, maxCores: 24, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-3305F': { maxSockets: 2, maxCores: 16, maxSSD: 30400, maxHDD: 72000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-3405(648)': { maxSockets: 2, maxCores: 28, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-3405(860)': { maxSockets: 2, maxCores: 36, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-X5-2205': { maxSockets: 2, maxCores: 16, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-X5-2305P': { maxSockets: 2, maxCores: 32, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-X5-2405': { maxSockets: 2, maxCores: 32, maxSSD: 15200, maxHDD: 48000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'aServer-X5-G2200': { maxSockets: 2, maxCores: 16, maxSSD: 15200, maxHDD: 40000, maxRAMModules: 24, maxNetworkCards: 8 },
+            'VDS-W-G530': { maxSockets: 2, maxCores: 16, maxSSD: 15200, maxHDD: 32000, maxRAMModules: 24, maxNetworkCards: 6 },
+            'VDS-W-G630': { maxSockets: 2, maxCores: 8, maxSSD: 15200, maxHDD: 32000, maxRAMModules: 24, maxNetworkCards: 6 }
+        };
+
+        // ==================== GLOBAL STATE ====================
+        let serverModels = {};
+        let components = {};
+        let hardwareLimits = {};
+        let currentDeleteAction = null;
+        let editingServerModel = null;
+
+        const CREDENTIALS = {
+            username: 'admin',
+            password: 'admin123'
+        };
+
+        const STORAGE_KEYS = {
+            SERVER_MODELS: 'sangfor_admin_server_models',
+            COMPONENTS: 'sangfor_admin_components',
+            HARDWARE_LIMITS: 'sangfor_admin_hardware_limits',
+            LAST_UPDATE: 'sangfor_admin_last_update',
+            SHARED_CONFIG: 'sangfor_hci_sizing_config'
+        };
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadData();
+        });
+
+        function checkAuth() {
+            const isAuthenticated = sessionStorage.getItem('isAuthenticated');
+            const currentUser = sessionStorage.getItem('currentUser');
+            
+            if (isAuthenticated === 'true' && currentUser) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').classList.add('active');
+                document.getElementById('currentUser').textContent = `👤 ${currentUser}`;
+                loadAllTabData();
+            }
+        }
+
+        function loadData() {
+            // Load server models
+            const storedServers = localStorage.getItem(STORAGE_KEYS.SERVER_MODELS);
+            serverModels = storedServers ? JSON.parse(storedServers) : JSON.parse(JSON.stringify(DEFAULT_SERVER_MODELS));
+
+            // Load components
+            const storedComponents = localStorage.getItem(STORAGE_KEYS.COMPONENTS);
+            components = storedComponents ? JSON.parse(storedComponents) : JSON.parse(JSON.stringify(DEFAULT_COMPONENTS));
+
+            // Load hardware limits
+            const storedLimits = localStorage.getItem(STORAGE_KEYS.HARDWARE_LIMITS);
+            hardwareLimits = storedLimits ? JSON.parse(storedLimits) : JSON.parse(JSON.stringify(DEFAULT_LIMITS));
+
+            // Update system info
+            updateSystemInfo();
+        }
+
+        function loadAllTabData() {
+            loadServerTable();
+            loadComponentTables();
+            loadLimitsTable();
+            updateStats();
+        }
+
+        function updateSystemInfo() {
+            const lastUpdate = localStorage.getItem(STORAGE_KEYS.LAST_UPDATE);
+            if (lastUpdate) {
+                document.getElementById('lastUpdate').textContent = new Date(lastUpdate).toLocaleString();
+            }
+            
+            const configSize = calculateConfigSize();
+            document.getElementById('configSize').textContent = configSize;
+        }
+
+        function calculateConfigSize() {
+            const data = {
+                serverModels: localStorage.getItem(STORAGE_KEYS.SERVER_MODELS),
+                components: localStorage.getItem(STORAGE_KEYS.COMPONENTS),
+                hardwareLimits: localStorage.getItem(STORAGE_KEYS.HARDWARE_LIMITS)
+            };
+            
+            const totalBytes = JSON.stringify(data).length;
+            const totalKB = (totalBytes / 1024).toFixed(2);
+            return `${totalKB} KB`;
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEYS.SERVER_MODELS, JSON.stringify(serverModels));
+            localStorage.setItem(STORAGE_KEYS.COMPONENTS, JSON.stringify(components));
+            localStorage.setItem(STORAGE_KEYS.HARDWARE_LIMITS, JSON.stringify(hardwareLimits));
+            localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, new Date().toISOString());
+            
+            // Update shared config for HCISizingTools-Rev4
+            syncWithHCITool();
+            
+            updateSystemInfo();
+        }
+
+        function syncWithHCITool() {
+            const sharedConfig = {
+                serverSpecs: {},
+                componentCatalog: {
+                    servers: {},
+                    memory: {},
+                    storage: { ssd: {}, sas: {}, sata: {} },
+                    network: {}
+                }
+            };
+
+            // Convert server models for HCITool
+            Object.keys(serverModels).forEach(modelId => {
+                const model = serverModels[modelId];
+                sharedConfig.serverSpecs[modelId] = {
+                    socket: model.socket,
+                    core: model.core,
+                    frequency: model.frequency,
+                    ramDefault: model.ramDefault,
+                    ramMax: model.ramMax,
+                    diskSlots: model.diskSlots,
+                    nicGE: model.nicGE,
+                    nic10GE: model.nic10GE,
+                    pciSlots: model.pciSlots
+                };
+                
+                sharedConfig.componentCatalog.servers[modelId] = {
+                    name: model.name,
+                    partNumber: model.partNumber,
+                    category: 'Server'
+                };
+            });
+
+            // Convert memory components
+            Object.keys(components.memory).forEach(capacity => {
+                sharedConfig.componentCatalog.memory[capacity] = components.memory[capacity];
+            });
+
+            // Convert storage components
+            Object.keys(components.storage.ssd).forEach(capacity => {
+                sharedConfig.componentCatalog.storage.ssd[capacity] = components.storage.ssd[capacity];
+            });
+            Object.keys(components.storage.sas).forEach(capacity => {
+                sharedConfig.componentCatalog.storage.sas[capacity] = components.storage.sas[capacity];
+            });
+            Object.keys(components.storage.sata).forEach(capacity => {
+                sharedConfig.componentCatalog.storage.sata[capacity] = components.storage.sata[capacity];
+            });
+
+            // Convert network components
+            Object.keys(components.network).forEach(type => {
+                sharedConfig.componentCatalog.network[type] = components.network[type];
+            });
+
+            // Save to shared storage key
+            localStorage.setItem(STORAGE_KEYS.SHARED_CONFIG, JSON.stringify(sharedConfig));
+        }
+
+        // ==================== AUTHENTICATION ====================
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorElement = document.getElementById('loginError');
+            
+            if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+                // Successful login
+                sessionStorage.setItem('isAuthenticated', 'true');
+                sessionStorage.setItem('currentUser', username);
+                
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').classList.add('active');
+                document.getElementById('currentUser').textContent = `👤 ${username}`;
+                
+                errorElement.classList.remove('active');
+                loadAllTabData();
+            } else {
+                // Failed login
+                errorElement.classList.add('active');
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginPassword').focus();
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleBtn = document.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isAuthenticated');
+            sessionStorage.removeItem('currentUser');
+            
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').classList.remove('active');
+        }
+
+        // ==================== NAVIGATION MANAGEMENT ====================
+        // Update active nav link based on scroll position
+        function updateActiveNavLink() {
+            const sections = document.querySelectorAll('.tab-content');
+            const navLinks = document.querySelectorAll('.nav-menu-btn');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= sectionTop - 200) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Listen for scroll events to update active nav link
+        window.addEventListener('scroll', updateActiveNavLink);
+
+        // ==================== MESSAGE DISPLAY ====================
+        function showMessage(tab, message, type = 'success') {
+            const messageElement = document.getElementById(`${tab}Message`);
+            messageElement.textContent = message;
+            messageElement.className = `message ${type} active`;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('active');
+            }, 5000);
+        }
+
+        // ==================== SERVER MODEL MANAGEMENT ====================
+        function loadServerTable() {
+            const tbody = document.getElementById('serverTableBody');
+            tbody.innerHTML = '';
+            
+            Object.keys(serverModels).sort().forEach(modelId => {
+                const model = serverModels[modelId];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${modelId}</strong></td>
+                    <td>${model.name}</td>
+                    <td>${model.socket}</td>
+                    <td>${model.core}</td>
+                    <td>${model.frequency}</td>
+                    <td>${model.ramDefault}</td>
+                    <td>${model.ramMax}</td>
+                    <td>${model.diskSlots}</td>
+                    <td>${model.nic10GE}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-icon edit" onclick="editServerModel('${modelId}')" title="Edit">✏️</button>
+                            <button class="btn-icon delete" onclick="confirmDeleteServer('${modelId}')" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updateStats();
+        }
+
+        function showAddServerModal() {
+            editingServerModel = null;
+            document.getElementById('serverModalTitle').textContent = 'Add Server Model';
+            document.getElementById('serverForm').reset();
+            document.getElementById('serverModelId').value = '';
+            document.getElementById('serverSockets').value = 2;
+            document.getElementById('serverCores').value = 24;
+            document.getElementById('serverFreq').value = 2.4;
+            document.getElementById('serverRamDefault').value = 128;
+            document.getElementById('serverRamMax').value = 1024;
+            document.getElementById('serverDiskSlots').value = 12;
+            document.getElementById('serverNic10GE').value = 2;
+            document.getElementById('serverNicGE').value = 4;
+            document.getElementById('serverPciSlots').value = 2;
+            document.getElementById('serverRamSlots').value = 24;
+            document.getElementById('serverMaxSSD').value = 15200;
+            document.getElementById('serverMaxHDD').value = 48000;
+            document.getElementById('serverModal').classList.add('active');
+        }
+
+        function editServerModel(modelId) {
+            editingServerModel = modelId;
+            const model = serverModels[modelId];
+            
+            document.getElementById('serverModalTitle').textContent = 'Edit Server Model';
+            document.getElementById('serverModelId').value = modelId;
+            document.getElementById('serverName').value = model.name;
+            document.getElementById('serverSockets').value = model.socket;
+            document.getElementById('serverCores').value = model.core;
+            document.getElementById('serverFreq').value = model.frequency;
+            document.getElementById('serverRamDefault').value = model.ramDefault;
+            document.getElementById('serverRamMax').value = model.ramMax;
+            document.getElementById('serverDiskSlots').value = model.diskSlots;
+            document.getElementById('serverNic10GE').value = model.nic10GE;
+            document.getElementById('serverNicGE').value = model.nicGE;
+            document.getElementById('serverPciSlots').value = model.pciSlots;
+            document.getElementById('serverRamSlots').value = model.ramSlots || 24;
+            document.getElementById('serverMaxSSD').value = model.maxSSD || 15200;
+            document.getElementById('serverMaxHDD').value = model.maxHDD || 48000;
+            document.getElementById('serverPartNumber').value = model.partNumber || '';
+            document.getElementById('serverDescription').value = model.description || '';
+            
+            document.getElementById('serverModal').classList.add('active');
+        }
+
+        function closeServerModal() {
+            document.getElementById('serverModal').classList.remove('active');
+            document.getElementById('serverForm').reset();
+            editingServerModel = null;
+        }
+
+        function saveServerModel() {
+            const form = document.getElementById('serverForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const modelId = document.getElementById('serverModelId').value || document.getElementById('serverName').value.replace(/\s+/g, '-');
+            const serverData = {
+                name: document.getElementById('serverName').value,
+                socket: parseInt(document.getElementById('serverSockets').value),
+                core: parseInt(document.getElementById('serverCores').value),
+                frequency: parseFloat(document.getElementById('serverFreq').value),
+                ramDefault: parseInt(document.getElementById('serverRamDefault').value),
+                ramMax: parseInt(document.getElementById('serverRamMax').value),
+                diskSlots: parseInt(document.getElementById('serverDiskSlots').value),
+                nic10GE: parseInt(document.getElementById('serverNic10GE').value),
+                nicGE: parseInt(document.getElementById('serverNicGE').value),
+                pciSlots: parseInt(document.getElementById('serverPciSlots').value),
+                ramSlots: parseInt(document.getElementById('serverRamSlots').value),
+                maxSSD: parseInt(document.getElementById('serverMaxSSD').value),
+                maxHDD: parseInt(document.getElementById('serverMaxHDD').value),
+                partNumber: document.getElementById('serverPartNumber').value,
+                description: document.getElementById('serverDescription').value,
+                maxRAMModules: parseInt(document.getElementById('serverRamSlots').value),
+                maxNetworkCards: 6
+            };
+
+            // Check if hardware specs have changed
+            const oldModel = serverModels[modelId];
+            const specsChanged = oldModel && (
+                oldModel.ramMax !== serverData.ramMax ||
+                oldModel.maxSSD !== serverData.maxSSD ||
+                oldModel.maxHDD !== serverData.maxHDD ||
+                oldModel.diskSlots !== serverData.diskSlots ||
+                oldModel.nic10GE !== serverData.nic10GE ||
+                oldModel.nicGE !== serverData.nicGE
+            );
+            
+            serverModels[modelId] = serverData;
+            
+            // Initialize or update hardware limits for this model
+            if (!hardwareLimits[modelId]) {
+                hardwareLimits[modelId] = {
+                    maxSockets: serverData.socket,
+                    maxCores: serverData.core,
+                    maxSSD: serverData.maxSSD,
+                    maxHDD: serverData.maxHDD,
+                    maxRAMModules: serverData.ramSlots,
+                    maxNetworkCards: 6
+                };
+            } else if (specsChanged) {
+                // Update limits when specs change
+                hardwareLimits[modelId].maxSockets = serverData.socket;
+                hardwareLimits[modelId].maxCores = serverData.core;
+                hardwareLimits[modelId].maxSSD = serverData.maxSSD;
+                hardwareLimits[modelId].maxHDD = serverData.maxHDD;
+                hardwareLimits[modelId].maxRAMModules = serverData.ramSlots;
+            }
+
+            saveData();
+            loadServerTable();
+            loadLimitsTable();
+            closeServerModal();
+            
+            const changeNote = specsChanged ? ' (hardware limits auto-updated)' : '';
+            showMessage('server', `${serverData.name} ${editingServerModel ? 'updated' : 'added'} successfully!${changeNote}`, 'success');
+        }
+
+        function confirmDeleteServer(modelId) {
+            const model = serverModels[modelId];
+            document.getElementById('deleteMessage').textContent = 
+                `Are you sure you want to delete server model "${model.name}" (${modelId})? This action cannot be undone.`;
+            
+            currentDeleteAction = () => deleteServerModel(modelId);
+            document.getElementById('confirmDeleteBtn').onclick = currentDeleteAction;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function deleteServerModel(modelId) {
+            delete serverModels[modelId];
+            delete hardwareLimits[modelId];
+            
+            saveData();
+            loadServerTable();
+            loadLimitsTable();
+            closeDeleteModal();
+            showMessage('server', 'Server model deleted successfully!', 'success');
+        }
+
+        function exportServerData() {
+            const dataStr = JSON.stringify(serverModels, null, 2);
+            downloadJSON(dataStr, 'sangfor_server_models.json');
+        }
+
+        function importServerData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Validate format
+                    if (typeof importedData !== 'object') {
+                        throw new Error('Invalid data format');
+                    }
+
+                    Object.keys(importedData).forEach(modelId => {
+                        serverModels[modelId] = importedData[modelId];
+                    });
+
+                    saveData();
+                    loadServerTable();
+                    showMessage('server', 'Server models imported successfully!', 'success');
+                } catch (error) {
+                    showMessage('server', 'Failed to import server data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function updateStats() {
+            document.getElementById('totalServerModels').textContent = Object.keys(serverModels).length;
+            document.getElementById('activeServerModels').textContent = Object.keys(serverModels).length;
+            
+            // Update dashboard overview stats
+            document.getElementById('overviewTotalServerModels').textContent = Object.keys(serverModels).length;
+            document.getElementById('overviewMemoryModules').textContent = Object.keys(components.memory).length;
+            document.getElementById('overviewStorageComponents').textContent =
+                Object.keys(components.storage.ssd).length +
+                Object.keys(components.storage.sas).length +
+                Object.keys(components.storage.sata).length;
+        }
+
+        // ==================== COMPONENT MANAGEMENT ====================
+        function loadComponentTables() {
+            loadMemoryTable();
+            loadSSDTable();
+            loadSASTable();
+            loadSATATable();
+            loadNetworkTable();
+        }
+
+        function loadMemoryTable() {
+            const tbody = document.getElementById('memoryTableBody');
+            tbody.innerHTML = '';
+            
+            Object.keys(components.memory).sort((a, b) => parseInt(a) - parseInt(b)).forEach(capacity => {
+                const comp = components.memory[capacity];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${capacity}</strong></td>
+                    <td>${comp.name}</td>
+                    <td>${comp.partNumber}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-icon edit" onclick="editComponent('memory', '${capacity}')" title="Edit">✏️</button>
+                            <button class="btn-icon delete" onclick="confirmDeleteComponent('memory', '${capacity}')" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadSSDTable() {
+            const tbody = document.getElementById('ssdTableBody');
+            tbody.innerHTML = '';
+            
+            Object.keys(components.storage.ssd).sort((a, b) => parseInt(a) - parseInt(b)).forEach(capacity => {
+                const comp = components.storage.ssd[capacity];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${capacity}</strong></td>
+                    <td>${comp.name}</td>
+                    <td>${comp.partNumber}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-icon edit" onclick="editComponent('ssd', '${capacity}')" title="Edit">✏️</button>
+                            <button class="btn-icon delete" onclick="confirmDeleteComponent('ssd', '${capacity}')" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadSASTable() {
+            const tbody = document.getElementById('sasTableBody');
+            tbody.innerHTML = '';
+            
+            Object.keys(components.storage.sas).sort((a, b) => parseInt(a) - parseInt(b)).forEach(capacity => {
+                const comp = components.storage.sas[capacity];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${capacity}</strong></td>
+                    <td>${comp.name}</td>
+                    <td>${comp.partNumber}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-icon edit" onclick="editComponent('sas', '${capacity}')" title="Edit">✏️</button>
+                            <button class="btn-icon delete" onclick="confirmDeleteComponent('sas', '${capacity}')" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadSATATable() {
+            const tbody = document.getElementById('sataTableBody');
+            tbody.innerHTML = '';
+            
+            Object.keys(components.storage.sata).sort((a, b) => parseInt(a) - parseInt(b)).forEach(capacity => {
+                const comp = components.storage.sata[capacity];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${capacity}</strong></td>
+                    <td>${comp.name}</td>
+                    <td>${comp.partNumber}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-icon edit" onclick="editComponent('sata', '${capacity}')" title="Edit">✏️</button>
+                            <button class="btn-icon delete" onclick="confirmDeleteComponent('sata', '${capacity}')" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadNetworkTable() {
+            const tbody = document.getElementById('networkTableBody');
+            tbody.innerHTML = '';
+            
+            const networkTypes = ['nic10ge', 'sfp', 'hba16gb'];
+            networkTypes.forEach(type => {
+                const comp = components.network[type];
+                const typeName = type === 'nic10ge' ? '10GE NIC' : type === 'sfp' ? 'SFP+ Module' : 'HBA Card';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${typeName}</strong></td>
+                    <td>${comp.name}</td>
+                    <td>${comp.partNumber}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-icon edit" onclick="editComponent('network', '${type}')" title="Edit">✏️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showAddComponentModal(preselectedType = null) {
+            document.getElementById('componentModalTitle').textContent = 'Add Component';
+            document.getElementById('componentForm').reset();
+            document.getElementById('componentId').value = '';
+            
+            if (preselectedType) {
+                document.getElementById('componentCategory').value = preselectedType;
+                updateComponentFormFields();
+            } else {
+                document.getElementById('componentCategory').value = '';
+                updateComponentFormFields();
+            }
+            
+            document.getElementById('componentModal').classList.add('active');
+        }
+
+        function editComponent(type, id) {
+            document.getElementById('componentModalTitle').textContent = 'Edit Component';
+            document.getElementById('componentType').value = type;
+            document.getElementById('componentId').value = id;
+            document.getElementById('componentCategory').value = type === 'memory' || type === 'ssd' || type === 'sas' || type === 'sata' ? type : 'network';
+            updateComponentFormFields();
+            
+            // Load existing data
+            let comp;
+            if (type === 'memory') {
+                comp = components.memory[id];
+                document.getElementById('compCapacity').value = id;
+                document.getElementById('compName').value = comp.name;
+                document.getElementById('compPartNumber').value = comp.partNumber;
+            } else if (type === 'ssd') {
+                comp = components.storage.ssd[id];
+                document.getElementById('compCapacity').value = id;
+                document.getElementById('compName').value = comp.name;
+                document.getElementById('compPartNumber').value = comp.partNumber;
+            } else if (type === 'sas') {
+                comp = components.storage.sas[id];
+                document.getElementById('compCapacity').value = id;
+                document.getElementById('compName').value = comp.name;
+                document.getElementById('compPartNumber').value = comp.partNumber;
+            } else if (type === 'sata') {
+                comp = components.storage.sata[id];
+                document.getElementById('compCapacity').value = id;
+                document.getElementById('compName').value = comp.name;
+                document.getElementById('compPartNumber').value = comp.partNumber;
+            } else if (type === 'network') {
+                comp = components.network[id];
+                document.getElementById('compNetworkType').value = id;
+                document.getElementById('compName').value = comp.name;
+                document.getElementById('compPartNumber').value = comp.partNumber;
+            }
+            
+            document.getElementById('componentModal').classList.add('active');
+        }
+
+        function updateComponentFormFields() {
+            const category = document.getElementById('componentCategory').value;
+            const container = document.getElementById('componentFormFields');
+            
+            if (category === 'memory') {
+                container.innerHTML = `
+                    <div class="form-group full-width">
+                        <label for="compCapacity" class="form-required">Capacity (GB)</label>
+                        <input type="number" id="compCapacity" min="8" step="8" required>
+                        <span class="form-hint">Memory capacity in gigabytes (e.g., 64, 128, 256)</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compName" class="form-required">Component Name</label>
+                        <input type="text" id="compName" placeholder="e.g., 64GB DDR4 ECC DIMM" required>
+                        <span class="form-hint">Full name of the memory module</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compPartNumber">Part Number</label>
+                        <input type="text" id="compPartNumber" placeholder="e.g., PENDING-RAM-64GB">
+                        <span class="form-hint">Manufacturer part number (optional)</span>
+                    </div>
+                `;
+            } else if (category === 'ssd') {
+                container.innerHTML = `
+                    <div class="form-group full-width">
+                        <label for="compCapacity" class="form-required">Capacity (GB)</label>
+                        <input type="number" id="compCapacity" min="120" step="10" required>
+                        <span class="form-hint">SSD capacity in gigabytes for cache tier</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compName" class="form-required">Component Name</label>
+                        <input type="text" id="compName" placeholder="e.g., 960GB SSD SATA" required>
+                        <span class="form-hint">Full name of the SSD drive</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compPartNumber">Part Number</label>
+                        <input type="text" id="compPartNumber" placeholder="e.g., PENDING-SSD-960GB">
+                        <span class="form-hint">Manufacturer part number (optional)</span>
+                    </div>
+                `;
+            } else if (category === 'sas') {
+                container.innerHTML = `
+                    <div class="form-group full-width">
+                        <label for="compCapacity" class="form-required">Capacity (GB)</label>
+                        <input type="number" id="compCapacity" min="1200" step="600" required>
+                        <span class="form-hint">SAS HDD capacity for storage tier</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compName" class="form-required">Component Name</label>
+                        <input type="text" id="compName" placeholder="e.g., 2.4TB SAS HDD" required>
+                        <span class="form-hint">Full name of the SAS drive</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compPartNumber">Part Number</label>
+                        <input type="text" id="compPartNumber" placeholder="e.g., PENDING-SAS-2.4TB">
+                        <span class="form-hint">Manufacturer part number (optional)</span>
+                    </div>
+                `;
+            } else if (category === 'sata') {
+                container.innerHTML = `
+                    <div class="form-group full-width">
+                        <label for="compCapacity" class="form-required">Capacity (GB)</label>
+                        <input type="number" id="compCapacity" min="4000" step="1000" required>
+                        <span class="form-hint">SATA HDD capacity for bulk storage</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compName" class="form-required">Component Name</label>
+                        <input type="text" id="compName" placeholder="e.g., 8TB SATA HDD" required>
+                        <span class="form-hint">Full name of the SATA drive</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compPartNumber">Part Number</label>
+                        <input type="text" id="compPartNumber" placeholder="e.g., PENDING-SATA-8TB">
+                        <span class="form-hint">Manufacturer part number (optional)</span>
+                    </div>
+                `;
+            } else if (category === 'network') {
+                container.innerHTML = `
+                    <div class="form-group full-width">
+                        <label for="compNetworkType" class="form-required">Network Type</label>
+                        <select id="compNetworkType" required>
+                            <option value="">Select type...</option>
+                            <option value="nic10ge">10GE Network Card (2 ports)</option>
+                            <option value="sfp">SFP+ 10GE Multimode Transceiver</option>
+                            <option value="hba16gb">HBA Card 16Gb FC</option>
+                        </select>
+                        <span class="form-hint">Type of network component</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compName" class="form-required">Component Name</label>
+                        <input type="text" id="compName" placeholder="e.g., 10GE Network Card" required>
+                        <span class="form-hint">Full name of the network component</span>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="compPartNumber">Part Number</label>
+                        <input type="text" id="compPartNumber" placeholder="e.g., PENDING-NIC-10GE">
+                        <span class="form-hint">Manufacturer part number (optional)</span>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">📋 Please select a component type to continue</p>';
+            }
+        }
+
+        function closeComponentModal() {
+            document.getElementById('componentModal').classList.remove('active');
+            document.getElementById('componentForm').reset();
+        }
+
+        function saveComponent() {
+            const category = document.getElementById('componentCategory').value;
+            const id = document.getElementById('componentId').value;
+            const name = document.getElementById('compName').value;
+            const partNumber = document.getElementById('compPartNumber').value || 'PENDING';
+            
+            if (category === 'memory') {
+                const capacity = document.getElementById('compCapacity').value;
+                components.memory[capacity] = { name, partNumber, category: 'Memory', unit: 'EA' };
+            } else if (category === 'ssd') {
+                const capacity = document.getElementById('compCapacity').value;
+                components.storage.ssd[capacity] = { name, partNumber, category: 'Storage', unit: 'EA' };
+            } else if (category === 'sas') {
+                const capacity = document.getElementById('compCapacity').value;
+                components.storage.sas[capacity] = { name, partNumber, category: 'Storage', unit: 'EA' };
+            } else if (category === 'sata') {
+                const capacity = document.getElementById('compCapacity').value;
+                components.storage.sata[capacity] = { name, partNumber, category: 'Storage', unit: 'EA' };
+            } else if (category === 'network') {
+                const type = document.getElementById('compNetworkType').value;
+                components.network[type] = { name, partNumber, category: 'Network', unit: 'EA' };
+            }
+            
+            saveData();
+            loadComponentTables();
+            closeComponentModal();
+            showMessage('component', 'Component saved successfully!', 'success');
+        }
+
+        function confirmDeleteComponent(type, id) {
+            const compName = type === 'memory' || type === 'ssd' || type === 'sas' || type === 'sata' 
+                ? components[type === 'memory' ? 'memory' : components.storage[type]][id].name
+                : components.network[id].name;
+            
+            document.getElementById('deleteMessage').textContent = 
+                `Are you sure you want to delete component "${compName}"? This action cannot be undone.`;
+            
+            currentDeleteAction = () => deleteComponent(type, id);
+            document.getElementById('confirmDeleteBtn').onclick = currentDeleteAction;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function deleteComponent(type, id) {
+            if (type === 'memory') {
+                delete components.memory[id];
+            } else if (type === 'ssd') {
+                delete components.storage.ssd[id];
+            } else if (type === 'sas') {
+                delete components.storage.sas[id];
+            } else if (type === 'sata') {
+                delete components.storage.sata[id];
+            } else if (type === 'network') {
+                // Don't delete network components, just show error
+                closeDeleteModal();
+                showMessage('component', 'Network components cannot be deleted.', 'error');
+                return;
+            }
+            
+            saveData();
+            loadComponentTables();
+            closeDeleteModal();
+            showMessage('component', 'Component deleted successfully!', 'success');
+        }
+
+        function exportComponentData() {
+            const dataStr = JSON.stringify(components, null, 2);
+            downloadJSON(dataStr, 'sangfor_components.json');
+        }
+
+        function importComponentData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (typeof importedData !== 'object') {
+                        throw new Error('Invalid data format');
+                    }
+
+                    // Merge with existing components
+                    if (importedData.memory) {
+                        components.memory = { ...components.memory, ...importedData.memory };
+                    }
+                    if (importedData.storage) {
+                        if (importedData.storage.ssd) {
+                            components.storage.ssd = { ...components.storage.ssd, ...importedData.storage.ssd };
+                        }
+                        if (importedData.storage.sas) {
+                            components.storage.sas = { ...components.storage.sas, ...importedData.storage.sas };
+                        }
+                        if (importedData.storage.sata) {
+                            components.storage.sata = { ...components.storage.sata, ...importedData.storage.sata };
+                        }
+                    }
+                    if (importedData.network) {
+                        components.network = { ...components.network, ...importedData.network };
+                    }
+
+                    saveData();
+                    loadComponentTables();
+                    showMessage('component', 'Components imported successfully!', 'success');
+                } catch (error) {
+                    showMessage('component', 'Failed to import component data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ==================== HARDWARE LIMITS MANAGEMENT ====================
+        function loadLimitsTable() {
+            const tbody = document.getElementById('limitsTableBody');
+            tbody.innerHTML = '';
+            
+            Object.keys(serverModels).sort().forEach(modelId => {
+                const model = serverModels[modelId];
+                const limits = hardwareLimits[modelId] || {
+                    maxSockets: model.socket,
+                    maxCores: model.core,
+                    maxSSD: model.maxSSD,
+                    maxHDD: model.maxHDD,
+                    maxRAMModules: model.ramSlots,
+                    maxNetworkCards: 6
+                };
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="model-name">${modelId}</td>
+                    <td><input type="number" data-model="${modelId}" data-field="maxSockets" value="${limits.maxSockets}" min="1" max="4"></td>
+                    <td><input type="number" data-model="${modelId}" data-field="maxCores" value="${limits.maxCores}" min="4" max="128"></td>
+                    <td><input type="number" data-model="${modelId}" data-field="maxSSD" value="${limits.maxSSD}" min="0" max="20000" step="100"></td>
+                    <td><input type="number" data-model="${modelId}" data-field="maxHDD" value="${limits.maxHDD}" min="0" max="500000" step="1000"></td>
+                    <td><input type="number" data-model="${modelId}" data-field="maxRAMModules" value="${limits.maxRAMModules}" min="8" max="48"></td>
+                    <td><input type="number" data-model="${modelId}" data-field="maxNetworkCards" value="${limits.maxNetworkCards}" min="1" max="10"></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function saveLimits() {
+            const inputs = document.querySelectorAll('#limitsTableBody input');
+            let hasChanges = false;
+            
+            inputs.forEach(input => {
+                const modelId = input.dataset.model;
+                const field = input.dataset.field;
+                const value = parseInt(input.value);
+                
+                if (!hardwareLimits[modelId]) {
+                    hardwareLimits[modelId] = {};
+                }
+                
+                if (hardwareLimits[modelId][field] !== value) {
+                    hardwareLimits[modelId][field] = value;
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                saveData();
+                showMessage('limits', 'Hardware limits saved successfully!', 'success');
+            } else {
+                showMessage('limits', 'No changes to save.', 'warning');
+            }
+        }
+
+        function resetToDefaults() {
+            hardwareLimits = JSON.parse(JSON.stringify(DEFAULT_LIMITS));
+            saveData();
+            loadLimitsTable();
+            showMessage('limits', 'Hardware limits reset to defaults!', 'success');
+        }
+
+        // ==================== SYSTEM SETTINGS ====================
+        function exportAllData() {
+            const allData = {
+                serverModels: serverModels,
+                components: components,
+                hardwareLimits: hardwareLimits,
+                exportDate: new Date().toISOString(),
+                version: '1.0.0'
+            };
+            
+            const dataStr = JSON.stringify(allData, null, 2);
+            downloadJSON(dataStr, `sangfor_admin_backup_${new Date().toISOString().split('T')[0]}.json`);
+        }
+
+        function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (!importedData.serverModels || !importedData.components) {
+                        throw new Error('Invalid backup file format');
+                    }
+
+                    // Apply imported data
+                    serverModels = importedData.serverModels;
+                    components = importedData.components;
+                    hardwareLimits = importedData.hardwareLimits || {};
+
+                    saveData();
+                    loadAllTabData();
+                    showMessage('settings', 'All data imported successfully!', 'success');
+                } catch (error) {
+                    showMessage('settings', 'Failed to import data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function confirmResetFactory() {
+            document.getElementById('deleteMessage').textContent = 
+                '⚠️ WARNING: This will reset ALL data to factory defaults. All custom server models, components, and limits will be lost. This action cannot be undone.\n\nAre you absolutely sure you want to continue?';
+            
+            currentDeleteAction = resetFactoryDefaults;
+            document.getElementById('confirmDeleteBtn').onclick = currentDeleteAction;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function resetFactoryDefaults() {
+            serverModels = JSON.parse(JSON.stringify(DEFAULT_SERVER_MODELS));
+            components = JSON.parse(JSON.stringify(DEFAULT_COMPONENTS));
+            hardwareLimits = JSON.parse(JSON.stringify(DEFAULT_LIMITS));
+            
+            saveData();
+            loadAllTabData();
+            closeDeleteModal();
+            showMessage('settings', 'Factory reset completed successfully!', 'success');
+        }
+
+        function showSyncStatus() {
+            const syncStatus = document.getElementById('syncStatus');
+            const hasSharedConfig = localStorage.getItem(STORAGE_KEYS.SHARED_CONFIG);
+            
+            if (hasSharedConfig) {
+                showMessage('settings', 'Configuration is synced with HCI Sizing Tool.', 'success');
+            } else {
+                showMessage('settings', 'Configuration has not been synced yet. Changes will be saved automatically.', 'warning');
+            }
+        }
+
+        // ==================== UTILITIES ====================
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            currentDeleteAction = null;
+        }
+
+        function downloadJSON(content, filename) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', function(event) {
+            // ESC to close modals
+            if (event.key === 'Escape') {
+                closeServerModal();
+                closeComponentModal();
+                closeDeleteModal();
+                hideLoading();
+            }
+            
+            // Ctrl+S to save when in limits tab
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab && activeTab.id === 'tab-hardwareLimits') {
+                    saveLimits();
+                }
+            }
+        });
+
+        // ==================== LOADING INDICATOR ====================
+        function showLoading(text = 'Loading...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // ==================== TOAST NOTIFICATIONS ====================
+        function showToast(title, message, type = 'info', duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type]}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="removeToast(this)">×</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto remove after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    removeToast(toast.querySelector('.toast-close'));
+                }, duration);
+            }
+
+            return toast;
+        }
+
+        function removeToast(button) {
+            const toast = button.closest('.toast');
+            toast.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }
+
+        // ==================== ENHANCED MESSAGE DISPLAY ====================
+        function showMessage(tab, message, type = 'success') {
+            const messages = {
+                success: { title: 'Success', toastType: 'success' },
+                error: { title: 'Error', toastType: 'error' },
+                warning: { title: 'Warning', toastType: 'warning' }
+            };
+
+            const config = messages[type] || messages.info;
+            showToast(config.title, message, config.toastType, 5000);
+
+            // Keep the original message bar functionality
+            const messageElement = document.getElementById(`${tab}Message`);
+            if (messageElement) {
+                messageElement.textContent = message;
+                messageElement.className = `message ${type} active`;
+                
+                setTimeout(() => {
+                    messageElement.classList.remove('active');
+                }, 5000);
+            }
+        }
+
+        // ==================== BUTTON LOADING STATES ====================
+        function setButtonLoading(btn, isLoading, originalText = '') {
+            if (isLoading) {
+                btn.dataset.originalText = originalText || btn.textContent;
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+                btn.textContent = btn.dataset.originalText;
+            } else {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+                btn.textContent = btn.dataset.originalText || btn.textContent;
+                delete btn.dataset.originalText;
+            }
+        }
+
+        // ==================== ENHANCED AUTHENTICATION ====================
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorElement = document.getElementById('loginError');
+            const submitBtn = event.target.querySelector('.login-btn');
+            
+            // Show loading state
+            setButtonLoading(submitBtn, true, 'Logging in...');
+            
+            // Simulate network delay for better UX
+            setTimeout(() => {
+                setButtonLoading(submitBtn, false);
+                
+                if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+                    // Successful login
+                    sessionStorage.setItem('isAuthenticated', 'true');
+                    sessionStorage.setItem('currentUser', username);
+                    
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('dashboard').classList.add('active');
+                    document.getElementById('currentUser').textContent = `👤 ${username}`;
+                    
+                    errorElement.classList.remove('active');
+                    
+                    showLoading('Loading dashboard data...');
+                    setTimeout(() => {
+                        loadAllTabData();
+                        hideLoading();
+                        showToast('Welcome back!', `Logged in as ${username}`, 'success', 3000);
+                    }, 500);
+                } else {
+                    // Failed login
+                    errorElement.classList.add('active');
+                    document.getElementById('loginPassword').value = '';
+                    document.getElementById('loginPassword').focus();
+                    showToast('Login Failed', 'Invalid username or password', 'error', 3000);
+                }
+            }, 800);
+        }
+
+        function logout() {
+            showLoading('Logging out...');
+            
+            setTimeout(() => {
+                sessionStorage.removeItem('isAuthenticated');
+                sessionStorage.removeItem('currentUser');
+                
+                document.getElementById('dashboard').classList.remove('active');
+                document.getElementById('loginScreen').style.display = 'block';
+                document.getElementById('loginForm').reset();
+                document.getElementById('loginError').classList.remove('active');
+                
+                hideLoading();
+                showToast('Logged Out', 'You have been successfully logged out', 'info', 2000);
+            }, 500);
+        }
+
+        // ==================== ENHANCED SERVER MODEL MANAGEMENT ====================
+        function saveServerModel() {
+            const form = document.getElementById('serverForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const saveBtn = document.querySelector('#serverModal .action-btn.success');
+            setButtonLoading(saveBtn, true, 'Saving...');
+
+            // Simulate processing delay for better UX
+            setTimeout(() => {
+                const modelId = document.getElementById('serverModelId').value || document.getElementById('serverName').value.replace(/\s+/g, '-');
+                const serverData = {
+                    name: document.getElementById('serverName').value,
+                    socket: parseInt(document.getElementById('serverSockets').value),
+                    core: parseInt(document.getElementById('serverCores').value),
+                    frequency: parseFloat(document.getElementById('serverFreq').value),
+                    ramDefault: parseInt(document.getElementById('serverRamDefault').value),
+                    ramMax: parseInt(document.getElementById('serverRamMax').value),
+                    diskSlots: parseInt(document.getElementById('serverDiskSlots').value),
+                    nic10GE: parseInt(document.getElementById('serverNic10GE').value),
+                    nicGE: parseInt(document.getElementById('serverNicGE').value),
+                    pciSlots: parseInt(document.getElementById('serverPciSlots').value),
+                    ramSlots: parseInt(document.getElementById('serverRamSlots').value),
+                    maxSSD: parseInt(document.getElementById('serverMaxSSD').value),
+                    maxHDD: parseInt(document.getElementById('serverMaxHDD').value),
+                    partNumber: document.getElementById('serverPartNumber').value,
+                    description: document.getElementById('serverDescription').value,
+                    maxRAMModules: parseInt(document.getElementById('serverRamSlots').value),
+                    maxNetworkCards: 6
+                };
+
+                // Check if hardware specs have changed
+                const oldModel = serverModels[modelId];
+                const specsChanged = oldModel && (
+                    oldModel.ramMax !== serverData.ramMax ||
+                    oldModel.maxSSD !== serverData.maxSSD ||
+                    oldModel.maxHDD !== serverData.maxHDD ||
+                    oldModel.diskSlots !== serverData.diskSlots ||
+                    oldModel.nic10GE !== serverData.nic10GE ||
+                    oldModel.nicGE !== serverData.nicGE
+                );
+                
+                serverModels[modelId] = serverData;
+                
+                // Initialize or update hardware limits for this model
+                if (!hardwareLimits[modelId]) {
+                    hardwareLimits[modelId] = {
+                        maxSockets: serverData.socket,
+                        maxCores: serverData.core,
+                        maxSSD: serverData.maxSSD,
+                        maxHDD: serverData.maxHDD,
+                        maxRAMModules: serverData.ramSlots,
+                        maxNetworkCards: 6
+                    };
+                } else if (specsChanged) {
+                    // Auto-update limits when specs change
+                    hardwareLimits[modelId].maxSockets = serverData.socket;
+                    hardwareLimits[modelId].maxCores = serverData.core;
+                    hardwareLimits[modelId].maxSSD = serverData.maxSSD;
+                    hardwareLimits[modelId].maxHDD = serverData.maxHDD;
+                    hardwareLimits[modelId].maxRAMModules = serverData.ramSlots;
+                }
+
+                saveData();
+                loadServerTable();
+                loadLimitsTable();
+                closeServerModal();
+                setButtonLoading(saveBtn, false);
+                
+                const changeNote = specsChanged ? ' (hardware limits auto-updated)' : '';
+                showToast('Server Model Saved', `${serverData.name} ${editingServerModel ? 'updated' : 'added'} successfully!${changeNote}`, 'success', 3000);
+            }, 500);
+        }
+
+        function deleteServerModel(modelId) {
+            showLoading('Deleting server model...');
+            
+            setTimeout(() => {
+                delete serverModels[modelId];
+                delete hardwareLimits[modelId];
+                
+                saveData();
+                loadServerTable();
+                loadLimitsTable();
+                closeDeleteModal();
+                hideLoading();
+                
+                showToast('Server Model Deleted', 'Server model has been deleted successfully', 'success', 3000);
+            }, 500);
+        }
+
+        // ==================== ENHANCED COMPONENT MANAGEMENT ====================
+        function saveComponent() {
+            const category = document.getElementById('componentCategory').value;
+            const id = document.getElementById('componentId').value;
+            const name = document.getElementById('compName').value;
+            const partNumber = document.getElementById('compPartNumber').value || 'PENDING';
+            
+            const saveBtn = document.querySelector('#componentModal .action-btn.success');
+            setButtonLoading(saveBtn, true, 'Saving...');
+            
+            setTimeout(() => {
+                if (category === 'memory') {
+                    const capacity = document.getElementById('compCapacity').value;
+                    components.memory[capacity] = { name, partNumber, category: 'Memory', unit: 'EA' };
+                } else if (category === 'ssd') {
+                    const capacity = document.getElementById('compCapacity').value;
+                    components.storage.ssd[capacity] = { name, partNumber, category: 'Storage', unit: 'EA' };
+                } else if (category === 'sas') {
+                    const capacity = document.getElementById('compCapacity').value;
+                    components.storage.sas[capacity] = { name, partNumber, category: 'Storage', unit: 'EA' };
+                } else if (category === 'sata') {
+                    const capacity = document.getElementById('compCapacity').value;
+                    components.storage.sata[capacity] = { name, partNumber, category: 'Storage', unit: 'EA' };
+                } else if (category === 'network') {
+                    const type = document.getElementById('compNetworkType').value;
+                    components.network[type] = { name, partNumber, category: 'Network', unit: 'EA' };
+                }
+                
+                saveData();
+                loadComponentTables();
+                closeComponentModal();
+                setButtonLoading(saveBtn, false);
+                
+                showToast('Component Saved', 'Component has been saved successfully!', 'success', 3000);
+            }, 500);
+        }
+
+        function deleteComponent(type, id) {
+            showLoading('Deleting component...');
+            
+            setTimeout(() => {
+                if (type === 'memory') {
+                    delete components.memory[id];
+                } else if (type === 'ssd') {
+                    delete components.storage.ssd[id];
+                } else if (type === 'sas') {
+                    delete components.storage.sas[id];
+                } else if (type === 'sata') {
+                    delete components.storage.sata[id];
+                } else if (type === 'network') {
+                    // Don't delete network components, just show error
+                    closeDeleteModal();
+                    hideLoading();
+                    showToast('Cannot Delete', 'Network components cannot be deleted.', 'error', 3000);
+                    return;
+                }
+                
+                saveData();
+                loadComponentTables();
+                closeDeleteModal();
+                hideLoading();
+                
+                showToast('Component Deleted', 'Component has been deleted successfully', 'success', 3000);
+            }, 500);
+        }
+
+        // ==================== ENHANCED HARDWARE LIMITS ====================
+        function saveLimits() {
+            const saveBtn = document.querySelector('#section-hardwareLimits .action-btn.success');
+            if (saveBtn) {
+                setButtonLoading(saveBtn, true, 'Saving...');
+            }
+            
+            const inputs = document.querySelectorAll('#limitsTableBody input');
+            let hasChanges = false;
+            
+            inputs.forEach(input => {
+                const modelId = input.dataset.model;
+                const field = input.dataset.field;
+                const value = parseInt(input.value);
+                
+                if (!hardwareLimits[modelId]) {
+                    hardwareLimits[modelId] = {};
+                }
+                
+                if (hardwareLimits[modelId][field] !== value) {
+                    hardwareLimits[modelId][field] = value;
+                    hasChanges = true;
+                }
+            });
+            
+            setTimeout(() => {
+                if (saveBtn) {
+                    setButtonLoading(saveBtn, false);
+                }
+                
+                if (hasChanges) {
+                    saveData();
+                    showToast('Limits Saved', 'Hardware limits have been saved successfully', 'success', 3000);
+                } else {
+                    showToast('No Changes', 'There are no changes to save', 'warning', 3000);
+                }
+            }, 500);
+        }
+
+        function resetToDefaults() {
+            showLoading('Resetting to defaults...');
+            
+            setTimeout(() => {
+                hardwareLimits = JSON.parse(JSON.stringify(DEFAULT_LIMITS));
+                saveData();
+                loadLimitsTable();
+                hideLoading();
+                
+                showToast('Defaults Restored', 'Hardware limits have been reset to factory defaults', 'success', 3000);
+            }, 800);
+        }
+
+        // ==================== ENHANCED IMPORT/EXPORT ====================
+        function exportServerData() {
+            showLoading('Exporting data...');
+            
+            setTimeout(() => {
+                const dataStr = JSON.stringify(serverModels, null, 2);
+                downloadJSON(dataStr, 'sangfor_server_models.json');
+                hideLoading();
+                
+                showToast('Export Complete', 'Server models have been exported successfully', 'success', 3000);
+            }, 500);
+        }
+
+        function importServerData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showLoading('Importing data...');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Validate format
+                    if (typeof importedData !== 'object') {
+                        throw new Error('Invalid data format');
+                    }
+
+                    Object.keys(importedData).forEach(modelId => {
+                        serverModels[modelId] = importedData[modelId];
+                    });
+
+                    saveData();
+                    loadServerTable();
+                    hideLoading();
+                    
+                    showToast('Import Complete', 'Server models imported successfully!', 'success', 3000);
+                } catch (error) {
+                    hideLoading();
+                    showToast('Import Failed', 'Failed to import server data: ' + error.message, 'error', 5000);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function exportComponentData() {
+            showLoading('Exporting data...');
+            
+            setTimeout(() => {
+                const dataStr = JSON.stringify(components, null, 2);
+                downloadJSON(dataStr, 'sangfor_components.json');
+                hideLoading();
+                
+                showToast('Export Complete', 'Components have been exported successfully', 'success', 3000);
+            }, 500);
+        }
+
+        function importComponentData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showLoading('Importing data...');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (typeof importedData !== 'object') {
+                        throw new Error('Invalid data format');
+                    }
+
+                    // Merge with existing components
+                    if (importedData.memory) {
+                        components.memory = { ...components.memory, ...importedData.memory };
+                    }
+                    if (importedData.storage) {
+                        if (importedData.storage.ssd) {
+                            components.storage.ssd = { ...components.storage.ssd, ...importedData.storage.ssd };
+                        }
+                        if (importedData.storage.sas) {
+                            components.storage.sas = { ...components.storage.sas, ...importedData.storage.sas };
+                        }
+                        if (importedData.storage.sata) {
+                            components.storage.sata = { ...components.storage.sata, ...importedData.storage.sata };
+                        }
+                    }
+                    if (importedData.network) {
+                        components.network = { ...components.network, ...importedData.network };
+                    }
+
+                    saveData();
+                    loadComponentTables();
+                    hideLoading();
+                    
+                    showToast('Import Complete', 'Components imported successfully!', 'success', 3000);
+                } catch (error) {
+                    hideLoading();
+                    showMessage('component', 'Failed to import component data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ==================== ENHANCED SYSTEM SETTINGS ====================
+        function exportAllData() {
+            showLoading('Creating backup...');
+            
+            setTimeout(() => {
+                const allData = {
+                    serverModels: serverModels,
+                    components: components,
+                    hardwareLimits: hardwareLimits,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0.0'
+                };
+                
+                const dataStr = JSON.stringify(allData, null, 2);
+                downloadJSON(dataStr, `sangfor_admin_backup_${new Date().toISOString().split('T')[0]}.json`);
+                hideLoading();
+                
+                showToast('Backup Complete', 'All data has been exported successfully', 'success', 3000);
+            }, 500);
+        }
+
+        function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showLoading('Restoring backup...');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (!importedData.serverModels || !importedData.components) {
+                        throw new Error('Invalid backup file format');
+                    }
+
+                    // Apply imported data
+                    serverModels = importedData.serverModels;
+                    components = importedData.components;
+                    hardwareLimits = importedData.hardwareLimits || {};
+
+                    saveData();
+                    loadAllTabData();
+                    hideLoading();
+                    
+                    showToast('Restore Complete', 'All data has been imported successfully', 'success', 3000);
+                } catch (error) {
+                    hideLoading();
+                    showToast('Restore Failed', 'Failed to import data: ' + error.message, 'error', 5000);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function resetFactoryDefaults() {
+            showLoading('Resetting to factory defaults...');
+            
+            setTimeout(() => {
+                serverModels = JSON.parse(JSON.stringify(DEFAULT_SERVER_MODELS));
+                components = JSON.parse(JSON.stringify(DEFAULT_COMPONENTS));
+                hardwareLimits = JSON.parse(JSON.stringify(DEFAULT_LIMITS));
+                
+                saveData();
+                loadAllTabData();
+                closeDeleteModal();
+                hideLoading();
+                
+                showToast('Factory Reset Complete', 'All data has been reset to factory defaults', 'success', 3000);
+            }, 1000);
+        }
+
+        // ==================== ENHANCED SYNC STATUS ====================
+        function showSyncStatus() {
+            const syncStatus = document.getElementById('syncStatus');
+            const hasSharedConfig = localStorage.getItem(STORAGE_KEYS.SHARED_CONFIG);
+            
+            showLoading('Checking sync status...');
+            
+            setTimeout(() => {
+                hideLoading();
+                if (hasSharedConfig) {
+                    showToast('Sync Active', 'Configuration is synced with HCI Sizing Tool', 'success', 3000);
+                } else {
+                    showToast('Pending Sync', 'Configuration will be synced automatically on next save', 'info', 4000);
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>

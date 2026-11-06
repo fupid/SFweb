@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANGFOR Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <noscript>
+        <style>
+            .no-js-warning { display: block !important; }
+            .sidebar { position: relative !important; width: 100% !important; }
+        </style>
+    </noscript>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Card hover effects */
+        .tool-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .tool-card:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        
+        /* Sidebar transition */
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .sidebar.hidden-mobile {
+            transform: translateX(-100%);
+        }
+        
+        @media (min-width: 768px) {
+            .sidebar.hidden-mobile {
+                transform: translateX(0);
+            }
+        }
+        
+        /* Filter button active state */
+        .filter-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        /* Search input focus */
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background-color: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        /* Coming soon badge */
+        .coming-soon-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <noscript>
+        <div class="no-js-warning hidden fixed top-0 left-0 right-0 bg-red-500 text-white text-center py-3 z-50">
+            ⚠️ JavaScript is required for full functionality. Please enable JavaScript in your browser.
+        </div>
+    </noscript>
+
+    <header class="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-50">
+        <div class="flex items-center justify-between p-4">
+            <h1 class="text-lg font-semibold text-gray-800">SANGFOR Tools</h1>
+            <button id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" 
+                    class="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <svg id="menuIcon" class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+                <svg id="closeIcon" class="w-6 h-6 text-gray-700 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <aside id="sidebar" class="sidebar hidden-mobile fixed md:relative top-14 md:top-0 left-0 w-64 bg-white p-6 shadow-lg md:shadow-none h-screen md:h-auto overflow-y-auto z-40">
+        <div class="md:hidden mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">SANGFOR Tools</h2>
+        </div>
+        <nav role="navigation" aria-label="Main navigation">
+            <ul class="space-y-2">
+                <li>
+                    <a href="#discover" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                        <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        <span class="font-medium">Discover</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Index.html" class="flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                        <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2 2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <span class="font-medium">Home</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="mt-6">
+                <h3 class="text-sm font-semibold uppercase text-gray-500 mb-3 tracking-wider">Tools</h3>
+                <ul role="menu">
+                    <li class="mb-2">
+                        <a href="smartRVtools.php" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                            <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <span class="font-medium">Smart RV Tools</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="edssizer.php" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                            <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13h-7v7h7v-7zM7 13H4v7h3v-7zM20 4h-7v7h7V4zM7 4H4v7h3V4z"></path>
+                            </svg>
+                            <span class="font-medium">aStor EDS Sizer</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="RvToolsPage.html" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                            <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                            <span class="font-medium">RV Tools Helper</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="BackupDrCDP.html" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                            <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l-3 3M15 19V6l3 3M12 6v13"></path>
+                            </svg>
+                            <span class="font-medium">Backup Calculation</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="HCISizingTool.php" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                            <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium">HCI Online Sizing</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="Admin.html" class="nav-link flex items-center text-gray-700 hover:text-blue-600 hover:bg-gray-100 p-3 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500" role="menuitem">
+                            <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span class="font-medium">Admin Panel</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </aside>
+
+    <div id="overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden" aria-hidden="true"></div>
+
+    <main class="flex-1 p-6 md:p-8 mt-14 md:mt-0" id="discover">
+        <header class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2 text-gray-800">Tools</h1>
+            <p class="text-gray-600 mb-6">SANGFOR Helper Tools</p>
+            
+            <div class="relative max-w-lg">
+                <label for="searchInput" class="sr-only">Search tools</label>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search tools..."
+                    class="search-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition duration-200 text-gray-700"
+                    aria-label="Search tools"
+                >
+                <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </header>
+
+        <nav class="mb-8" aria-label="Filter tools by category">
+            <div class="flex flex-wrap gap-3" role="group" aria-label="Tool category filters">
+                <button 
+                    class="filter-btn active px-5 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    data-filter="all"
+                    aria-pressed="true"
+                >
+                    All
+                </button>
+                <button 
+                    class="filter-btn px-5 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    data-filter="vmware"
+                    aria-pressed="false"
+                >
+                    VMware
+                </button>
+                <button 
+                    class="filter-btn px-5 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    data-filter="backup"
+                    aria-pressed="false"
+                >
+                    Backup
+                </button>
+                <button 
+                    class="filter-btn px-5 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    data-filter="hci"
+                    aria-pressed="false"
+                >
+                    HCI
+                </button>
+                <button 
+                    class="filter-btn px-5 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    data-filter="storage"
+                    aria-pressed="false"
+                >
+                    Storage
+                </button>
+                <button 
+                    class="filter-btn px-5 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    data-filter="documentation"
+                    aria-pressed="false"
+                >
+                    Documentation
+                </button>
+            </div>
+        </nav>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="toolsGrid" aria-label="Available tools">
+            
+            <article class="tool-card relative" data-category="storage" data-name="astor eds sizer pro storage distributed">
+                <a href="edssizer.php" class="block w-full bg-slate-800 p-6 rounded-xl shadow-lg border-2 border-slate-600 flex flex-col items-center text-center h-full group focus:outline-none" tabindex="0">
+                    <span class="sr-only">aStor EDS Sizer - Enterprise Distributed Storage tool</span>
+                    <div class="w-24 h-24 mb-4 flex items-center justify-center bg-blue-500 rounded-full group-hover:bg-blue-400 transition duration-300 shadow-inner">
+                        <svg class="w-16 h-16 text-white group-hover:scale-110 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13h-7v7h7v-7zM7 13H4v7h3v-7zM20 4h-7v7h7V4zM7 4H4v7h3V4z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold mb-2 text-white">aStor EDS Sizer</h2>
+                    <p class="text-slate-300 text-sm leading-relaxed font-medium uppercase tracking-tighter">Enterprise Distributed Storage Planner with Dual-Pool Support</p>
+                    <div class="mt-4 text-blue-400 text-sm font-bold opacity-100 group-hover:translate-x-2 transition-transform duration-300">
+                        Start Sizing →
+                    </div>
+                </a>
+            </article>
+
+            <article class="tool-card relative" data-category="vmware" data-name="smart rv tools analyzer sizing infrastructure">
+                <a href="smartRVtools.php" class="block w-full bg-blue-600 p-6 rounded-xl shadow-lg border-2 border-blue-400 flex flex-col items-center text-center h-full group focus:outline-none" tabindex="0">
+                    <span class="sr-only">Smart RV Tools - Analyzer and Sizing tool</span>
+                    <div class="w-24 h-24 mb-4 flex items-center justify-center bg-white/20 rounded-full group-hover:bg-white/30 transition duration-300">
+                        <svg class="w-16 h-16 text-white group-hover:scale-110 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold mb-2 text-white">Smart RV Tools</h2>
+                    <p class="text-blue-100 text-sm leading-relaxed font-medium uppercase tracking-tighter">AI-Driven Infrastructure Analyzer & Smart Sizing Suggestion</p>
+                    <div class="mt-4 text-white text-sm font-bold opacity-100 group-hover:translate-x-2 transition-transform duration-300">
+                        Launch Analyzer →
+                    </div>
+                </a>
+            </article>
+
+            <article class="tool-card relative" data-category="vmware" data-name="rv tools helper vmware">
+                <a href="RvToolsPage.html" class="block w-full bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center h-full group focus:outline-none" tabindex="0">
+                    <span class="sr-only">RV Tools Helper - VMware tool</span>
+                    <div class="w-24 h-24 mb-4 flex items-center justify-center bg-blue-100 rounded-full group-hover:bg-blue-200 transition duration-300">
+                        <svg class="w-16 h-16 text-blue-500 group-hover:scale-110 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-semibold mb-2 text-gray-800">RV Tools Helper</h2>
+                    <p class="text-gray-600 text-sm leading-relaxed">Powerful tool for analyzing and managing VMware vCenter environments</p>
+                    <div class="mt-4 text-blue-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Open Tool →
+                    </div>
+                </a>
+            </article>
+
+            <article class="tool-card relative" data-category="backup" data-name="backup calculation storage retention">
+                <a href="BackupDrCDP.html" class="block w-full bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center h-full group focus:outline-none" tabindex="0">
+                    <span class="sr-only">Backup Calculation - Backup tool</span>
+                    <div class="w-24 h-24 mb-4 flex items-center justify-center bg-green-100 rounded-full group-hover:bg-green-200 transition duration-300">
+                        <svg class="w-16 h-16 text-green-500 group-hover:scale-110 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-semibold mb-2 text-gray-800">Backup Calculation</h2>
+                    <p class="text-gray-600 text-sm leading-relaxed">Calculate backup storage requirements, retention policies with ease</p>
+                    <div class="mt-4 text-green-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Open Tool →
+                    </div>
+                </a>
+            </article>
+
+            <article class="tool-card relative" data-category="hci" data-name="hci online sizing infrastructure planning">
+                <a href="HCISizingTool.php" class="block w-full bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center h-full group focus:outline-none" tabindex="0">
+                    <span class="sr-only">HCI Online Sizing - HCI tool</span>
+                    <div class="w-24 h-24 mb-4 flex items-center justify-center bg-purple-100 rounded-full group-hover:bg-purple-200 transition duration-300">
+                        <svg class="w-16 h-16 text-purple-500 group-hover:scale-110 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-semibold mb-2 text-gray-800">HCI Online Sizing</h2>
+                    <p class="text-gray-600 text-sm leading-relaxed">Online sizing tools for HCI infrastructure planning and deployment</p>
+                    <div class="mt-4 text-purple-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Open Tool →
+                    </div>
+                </a>
+            </article>
+
+            <article class="tool-card relative opacity-75" data-category="documentation" data-name="material document product documentation bom">
+                <span class="coming-soon-badge">Coming Soon</span>
+                <div class="block w-full bg-gray-100 p-6 rounded-xl shadow-md flex flex-col items-center text-center h-full cursor-not-allowed" aria-disabled="true" role="link" tabindex="-1">
+                    <span class="sr-only">Material Document - Documentation tool (Coming Soon)</span>
+                    <div class="w-24 h-24 mb-4 flex items-center justify-center bg-yellow-100 rounded-full">
+                        <svg class="w-16 h-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-semibold mb-2 text-gray-600">Material Document</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">Product documentation and BOM materials reference guide</p>
+                    <div class="mt-4 text-gray-400 text-sm font-medium">
+                        Coming Soon
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div id="noResults" class="hidden text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">No tools found</h3>
+            <p class="text-gray-500">Try adjusting your search or filters</p>
+        </div>
+    </main>
+
+    <div id="toast" class="toast" role="alert" aria-live="polite">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        // Mobile Sidebar Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuIcon = document.getElementById('menuIcon');
+        const closeIcon = document.getElementById('closeIcon');
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            menuToggle.setAttribute('aria-expanded', isMenuOpen);
+            
+            if (isMenuOpen) {
+                sidebar.classList.remove('hidden-mobile');
+                overlay.classList.remove('hidden');
+                menuIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('hidden-mobile');
+                overlay.classList.add('hidden');
+                menuIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // Close menu when clicking a link
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (isMenuOpen) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        // Search and Filter Functionality
+        const searchInput = document.getElementById('searchInput');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const toolCards = document.querySelectorAll('.tool-card');
+        const noResults = document.getElementById('noResults');
+
+        let activeFilter = 'all';
+        let searchQuery = '';
+
+        // Debounce function for search
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Filter cards based on search and category
+        function filterCards() {
+            let visibleCount = 0;
+
+            toolCards.forEach(card => {
+                const category = card.getAttribute('data-category');
+                const name = card.getAttribute('data-name').toLowerCase();
+                
+                const matchesFilter = activeFilter === 'all' || category === activeFilter;
+                const matchesSearch = name.includes(searchQuery);
+
+                if (matchesFilter && matchesSearch) {
+                    card.style.display = 'block';
+                    card.style.animation = 'fadeIn 0.3s ease';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            if (visibleCount === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        }
+
+        // Search input handler
+        searchInput.addEventListener('input', debounce((e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            filterCards();
+        }, 300));
+
+        // Filter button handlers
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active state
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                button.classList.add('active');
+                button.setAttribute('aria-pressed', 'true');
+
+                // Update filter
+                activeFilter = button.getAttribute('data-filter');
+                filterCards();
+
+                // Show toast notification
+                showToast(`Filtering by: ${button.textContent}`);
+            });
+        });
+
+        // Toast notification function
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Keyboard navigation for filter buttons
+        filterButtons.forEach((button, index) => {
+            button.addEventListener('keydown', (e) => {
+                const buttons = Array.from(filterButtons);
+                const currentIndex = buttons.indexOf(button);
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % buttons.length;
+                    buttons[nextIndex].focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+                    buttons[prevIndex].focus();
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    button.click();
+                }
+            });
+        });
+
+        // Handle escape key to close mobile menu
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isMenuOpen) {
+                toggleMenu();
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

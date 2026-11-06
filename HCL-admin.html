@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – Sangfor HCI Compatibility DB</title>
+<script src="HCL-compatibility_data.js"></script>
+<style>
+:root { --blue: #003087; --teal: #00b4d8; --light: #e8f4fd; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: #1e293b; }
+.header {
+  background: linear-gradient(135deg, var(--blue), #0056b8);
+  color: white; padding: 0 24px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-title { font-size: 18px; font-weight: 700; }
+.header-sub { font-size: 11px; opacity: .7; margin-top: 1px; }
+a.back-btn { color: white; text-decoration: none; font-size: 13px; opacity: .8; }
+a.back-btn:hover { opacity: 1; }
+
+.main { max-width: 960px; margin: 32px auto; padding: 0 24px; display: flex; flex-direction: column; gap: 24px; }
+.card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow: hidden; }
+.card-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px; }
+.card-icon { font-size: 20px; }
+.card-title { font-size: 15px; font-weight: 700; color: var(--blue); }
+.card-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+.card-body { padding: 20px; }
+
+.steps { display: flex; flex-direction: column; gap: 16px; }
+.step { display: flex; gap: 14px; align-items: flex-start; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--blue);
+  color: white; font-weight: 700; font-size: 13px; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+}
+.step-body { flex: 1; }
+.step-title { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+.step-desc { font-size: 12px; color: #64748b; line-height: 1.5; }
+code {
+  font-family: 'Consolas', monospace; font-size: 12px;
+  background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;
+}
+pre {
+  background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px;
+  font-size: 12px; line-height: 1.6; overflow-x: auto; margin-top: 8px;
+}
+
+.upload-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.upload-zone {
+  border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px 24px;
+  cursor: pointer; transition: all .15s; text-align: center;
+}
+.upload-zone:hover { border-color: var(--teal); background: #f0fdff; }
+.upload-zone p { font-size: 13px; color: #475569; }
+.upload-zone strong { color: var(--blue); }
+
+.btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; }
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:hover { background: #002070; }
+.btn-teal { background: var(--teal); color: white; }
+.btn-teal:hover { background: #0096b8; }
+.btn-outline { background: transparent; border: 1.5px solid #e2e8f0; color: #475569; }
+.btn-outline:hover { border-color: var(--teal); color: var(--blue); }
+.btn-danger { background: #dc2626; color: white; }
+.btn-success { background: #16a34a; color: white; }
+
+.status-box { padding: 14px 16px; border-radius: 8px; font-size: 13px; margin-top: 12px; }
+.status-info { background: var(--light); color: var(--blue); border: 1px solid #bfdbfe; }
+.status-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.status-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.status-warn { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 12px; font-weight: 600; color: #475569; }
+input, select, textarea {
+  padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px;
+  font-size: 13px; outline: none; transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,180,216,0.1); }
+textarea { min-height: 60px; resize: vertical; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #f8fafc; padding: 9px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfd; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.badge-compatible { background: #dcfce7; color: #16a34a; }
+.badge-not-compatible { background: #fee2e2; color: #dc2626; }
+.badge-certificate { background: #dbeafe; color: #1d4ed8; }
+.badge-evaluated { background: #f3e8ff; color: #9333ea; }
+.badge-unknown { background: #f3f4f6; color: #6b7280; }
+.del-btn { padding: 3px 8px; border-radius: 4px; border: 1px solid #fecaca; background: #fff1f1; color: #dc2626; cursor: pointer; font-size: 11px; }
+.del-btn:hover { background: #fee2e2; }
+
+.json-preview {
+  background: #0f172a; color: #e2e8f0; font-family: 'Consolas', monospace;
+  font-size: 11px; padding: 14px; border-radius: 8px; max-height: 300px;
+  overflow-y: auto; white-space: pre-wrap; margin-top: 10px;
+}
+hr { border: none; border-top: 1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <div class="header-title">⚙️ Compatibility Database Admin</div>
+    <div class="header-sub">Update and manage HCL-compatibility_data.json</div>
+  </div>
+  <a class="back-btn" href="HCL-index.html">← Back to Search</a>
+</header>
+
+<div class="main">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">📥</span>
+      <div>
+        <div class="card-title">Update Database from New CSV Export</div>
+        <div class="card-sub">Use this when you have fresh CSV exports from Sangfor compatibility portal</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Download fresh CSV from Sangfor portal</div>
+            <div class="step-desc">Name the files starting with <code>sangfor_site1_</code> or <code>sangfor_site2_</code> and ending with <code>.csv</code>. Example: <code>sangfor_site1_complete_2026-06-01.csv</code></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Place the CSV file in the same folder as this website</div>
+            <div class="step-desc">Same directory as <code>HCL-index.html</code></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Run the converter script</div>
+            <div class="step-desc">Open a terminal in the website folder and run:</div>
+            <pre>node HCL-convert_csv_to_json.js</pre>
+            <div class="step-desc" style="margin-top:8px">This regenerates <code>HCL-compatibility_data.json</code> and <code>HCL-compatibility_data.js</code>, preserving any manually-added entries.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Refresh the browser</div>
+            <div class="step-desc">The website will automatically load the updated database on next page refresh.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🔄</span>
+      <div>
+        <div class="card-title">Import CSV Directly in Browser</div>
+        <div class="card-sub">Merge new CSV entries into the database without running Node.js</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p style="font-size:13px;color:#475569;margin-bottom:12px">
+        Upload a Site1 or Site2 CSV file here to merge it with the existing database.
+        Changes are stored in browser localStorage until you download the updated JSON.
+      </p>
+      <div class="upload-row">
+        <div class="upload-zone" onclick="document.getElementById('csvInput').click()">
+          <p><strong>Click to upload CSV</strong></p>
+          <p style="font-size:11px;margin-top:4px;color:#94a3b8">sangfor_site1_*.csv or sangfor_site2_*.csv</p>
+        </div>
+        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+      </div>
+      <div id="importStatus"></div>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap" id="downloadRow" style="display:none">
+        <button class="btn btn-teal" onclick="downloadUpdatedJSON()">⬇ Download Updated JSON</button>
+        <button class="btn btn-outline" onclick="clearImportedData()">Clear Imported Data</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">➕</span>
+      <div>
+        <div class="card-title">Add Single Entry</div>
+        <div class="card-sub">Manually add a new hardware compatibility record</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Platform</label>
+          <input id="fPlatform" value="HCI">
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="fCategory">
+            <option value="">Select…</option>
+            <option>CPU</option><option>Server</option><option>Hard Disk</option>
+            <option>Network Card</option><option>Memory</option><option>Raid Card</option>
+            <option>HBA Card</option><option>GPU Card</option>
+            <option>External Storage</option><option>Operating System</option>
+            <option>Encryption Machine</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Model *</label>
+          <input id="fModel" placeholder="e.g. PowerEdge R760, ProLiant DL380 Gen11">
+        </div>
+        <div class="form-group">
+          <label>Manufacturer *</label>
+          <input id="fManufacturer" placeholder="e.g. Dell, HPE, Lenovo">
+        </div>
+        <div class="form-group">
+          <label>Architecture</label>
+          <select id="fArchitecture">
+            <option value="x86">x86</option>
+            <option value="c86">c86</option>
+            <option value="ARM">ARM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status *</label>
+          <select id="fStatus">
+            <option value="Compatible">Compatible</option>
+            <option value="Not Compatible">Not Compatible</option>
+            <option value="Certificate">Certificate</option>
+            <option value="Evaluated">Evaluated</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Source</label>
+          <select id="fSource">
+            <option value="Manual">Manual</option>
+            <option value="Site1">Site1</option>
+            <option value="Site2">Site2</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Recommended Config</label>
+          <input id="fRecConfig" placeholder="Config number or notes">
+        </div>
+        <div class="form-group full">
+          <label>Remarks / Notes</label>
+          <textarea id="fRemarks" placeholder="e.g. Only supported on HCI 6.10.0+"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Reference URL</label>
+          <input id="fUrl" placeholder="https://www.sangfor.com/…">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" onclick="addSingleEntry()">Add Entry</button>
+        <span id="addEntryStatus" style="font-size:12px;color:#16a34a"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">📝</span>
+      <div>
+        <div class="card-title">Manually-Added Entries</div>
+        <div class="card-sub">Entries added via this admin page (stored in browser localStorage)</div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div id="manualTableWrap">
+        <p style="padding:20px;font-size:13px;color:#94a3b8">No manually-added entries yet.</p>
+      </div>
+      <div style="padding:16px 20px;border-top:1px solid #e2e8f0;display:flex;gap:10px">
+        <button class="btn btn-teal" onclick="downloadUpdatedJSON()">⬇ Download JSON (includes manual entries)</button>
+        <button class="btn btn-outline" onclick="clearAllManual()">🗑 Clear All Manual Entries</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🗂</span>
+      <div>
+        <div class="card-title">Database Metadata</div>
+        <div class="card-sub">Current state of HCL-compatibility_data.json</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="dbMetadata" class="json-preview">Loading…</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let DB = null;
+const MANUAL_KEY = 'sangfor_manual_entries';
+let importedEntries = [];
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadDB();
+  refreshManualTable();
+});
+
+async function loadDB() {
+  try {
+    if (!window.COMPAT_DB) throw new Error('HCL-compatibility_data.js not loaded');
+    DB = window.COMPAT_DB;
+    const manual = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+    const csvIds = new Set(DB.entries.map(e => e.id));
+    manual.forEach(e => { if (!csvIds.has(e.id)) DB.entries.push(e); });
+    document.getElementById('dbMetadata').textContent = JSON.stringify({
+      ...DB.metadata,
+      total_with_manual: DB.entries.length,
+      manual_entries: manual.length
+    }, null, 2);
+  } catch(e) {
+    document.getElementById('dbMetadata').textContent = 'Error loading database: ' + e.message;
+  }
+}
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    try {
+      const rows = parseCSV(text);
+      const isSite2 = file.name.includes('site2');
+      const newEntries = rows.map((r, i) => ({
+        id: Date.now() + i,
+        platform: (r.Platform || 'HCI').replace(/﻿/g,'').trim(),
+        category: (isSite2 ? r.Hardware_Type : r.Category) || '',
+        model: r.Model || '',
+        manufacturer: r.Manufacturer || '',
+        architecture: r.Architecture || '',
+        status: normalizeStatus(r.Status),
+        url: r.Compatible_Version_URL || '',
+        recommended_config: r.Recommended_Config || '',
+        remarks: r.Remarks || '',
+        source: (isSite2 ? 'Site2' : 'Site1'),
+        update_time: r.Update_Time || '',
+        manually_added: false
+      }));
+      importedEntries = newEntries;
+      const existing = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+      const merged = [...existing, ...newEntries.map(e => ({ ...e, manually_added: true }))];
+      localStorage.setItem(MANUAL_KEY, JSON.stringify(merged));
+      document.getElementById('importStatus').innerHTML = `
+        <div class="status-box status-success">
+          ✅ Imported <strong>${newEntries.length} entries</strong> from ${file.name}.
+          Click "Download Updated JSON" to save the merged database.
+        </div>`;
+      document.getElementById('downloadRow').style.display = 'flex';
+      refreshManualTable();
+    } catch(err) {
+      document.getElementById('importStatus').innerHTML = `<div class="status-box status-error">❌ Error parsing CSV: ${err.message}</div>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text) {
+  function parseRow(line) {
+    const r = []; let cur = '', inQ = false;
+    for (const c of line) {
+      if (c === '"') inQ = !inQ;
+      else if (c === ',' && !inQ) { r.push(cur); cur = ''; }
+      else cur += c;
+    }
+    r.push(cur); return r;
+  }
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  const headers = parseRow(lines[0]).map(h=>h.replace(/﻿/g,'').trim());
+  return lines.slice(1).map(l => {
+    const p = parseRow(l);
+    return Object.fromEntries(headers.map((h,i)=>[h,(p[i]||'').trim()]));
+  });
+}
+
+function normalizeStatus(s) {
+  if(!s || s === '-') return 'Unknown';
+  const low = s.toLowerCase();
+  if(low==='compatible'||s==='兼容'||s==='支持') return 'Compatible';
+  if(low==='not compatible'||s==='不支持') return 'Not Compatible';
+  if(low==='certificate') return 'Certificate';
+  if(low==='evaluated') return 'Evaluated';
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return 'Unknown';
+  if(/[一-鿿]/.test(s)) return 'Unknown';
+  return s;
+}
+
+function clearImportedData() {
+  const existing = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+  const filtered = existing.filter(e => !importedEntries.some(ie => ie.id === e.id));
+  localStorage.setItem(MANUAL_KEY, JSON.stringify(filtered));
+  importedEntries = [];
+  document.getElementById('importStatus').innerHTML = '<div class="status-box status-info">ℹ️ Imported data cleared.</div>';
+  document.getElementById('downloadRow').style.display = 'none';
+  document.getElementById('csvInput').value = '';
+  refreshManualTable();
+}
+
+function addSingleEntry() {
+  const model = document.getElementById('fModel').value.trim();
+  const category = document.getElementById('fCategory').value;
+  const manufacturer = document.getElementById('fManufacturer').value.trim();
+  const status = document.getElementById('fStatus').value;
+  if (!model || !category || !manufacturer || !status) {
+    document.getElementById('addEntryStatus').style.color = '#dc2626';
+    document.getElementById('addEntryStatus').textContent = '⚠ Please fill in Category, Model, Manufacturer, and Status.';
+    return;
+  }
+  const entry = {
+    id: Date.now(),
+    platform: document.getElementById('fPlatform').value || 'HCI',
+    category, model, manufacturer,
+    architecture: document.getElementById('fArchitecture').value,
+    status,
+    url: document.getElementById('fUrl').value.trim(),
+    recommended_config: document.getElementById('fRecConfig').value.trim(),
+    remarks: document.getElementById('fRemarks').value.trim(),
+    source: document.getElementById('fSource').value,
+    update_time: new Date().toISOString().replace('T',' ').substring(0,19),
+    manually_added: true
+  };
+  const existing = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+  existing.unshift(entry);
+  localStorage.setItem(MANUAL_KEY, JSON.stringify(existing));
+  ['fModel','fManufacturer','fRecConfig','fRemarks','fUrl'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fCategory').value = '';
+  document.getElementById('addEntryStatus').style.color = '#16a34a';
+  document.getElementById('addEntryStatus').textContent = `✅ "${model}" added. Download JSON to save permanently.`;
+  setTimeout(() => document.getElementById('addEntryStatus').textContent = '', 4000);
+  refreshManualTable();
+}
+
+function refreshManualTable() {
+  const entries = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+  const wrap = document.getElementById('manualTableWrap');
+  if (entries.length === 0) {
+    wrap.innerHTML = '<p style="padding:20px;font-size:13px;color:#94a3b8">No manually-added entries yet.</p>';
+    return;
+  }
+  const statusBadge = s => {
+    const m = {'Compatible':'compatible','Certificate':'certificate','Evaluated':'evaluated','Not Compatible':'not-compatible','Unknown':'unknown'};
+    return `<span class="badge badge-${m[s]||'unknown'}">${s}</span>`;
+  };
+  const rows = entries.slice(0, 50).map(e => `
+    <tr>
+      <td>${e.category}</td>
+      <td style="font-weight:600">${e.model}</td>
+      <td>${e.manufacturer}</td>
+      <td>${statusBadge(e.status)}</td>
+      <td>${e.source}</td>
+      <td style="font-size:11px;color:#64748b">${e.update_time||''}</td>
+      <td><button class="del-btn" onclick="deleteManualEntry(${e.id})">Delete</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Category</th><th>Model</th><th>Manufacturer</th><th>Status</th><th>Source</th><th>Date</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${entries.length > 50 ? `<p style="padding:10px 16px;font-size:12px;color:#64748b">Showing 50 of ${entries.length} entries</p>` : ''}`;
+}
+
+function deleteManualEntry(id) {
+  const existing = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+  const updated = existing.filter(e => e.id !== id);
+  localStorage.setItem(MANUAL_KEY, JSON.stringify(updated));
+  refreshManualTable();
+}
+
+function clearAllManual() {
+  if (!confirm('Delete ALL manually-added entries from browser storage? This cannot be undone.')) return;
+  localStorage.removeItem(MANUAL_KEY);
+  refreshManualTable();
+}
+
+async function downloadUpdatedJSON() {
+  if (!DB) { alert('Database not loaded yet. Please wait.'); return; }
+  const manual = JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+  const csvEntries = DB.entries.filter(e => !e.manually_added);
+  const allEntries = [...csvEntries, ...manual];
+  const categories = [...new Set(allEntries.map(e=>e.category))].filter(Boolean).sort();
+  const manufacturers = [...new Set(allEntries.map(e=>e.manufacturer))].filter(Boolean).sort();
+  const updated = {
+    metadata: { ...DB.metadata, last_updated: new Date().toISOString().split('T')[0], total_entries: allEntries.length, categories, manufacturers },
+    entries: allEntries
+  };
+  const json = JSON.stringify(updated, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'HCL-compatibility_data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

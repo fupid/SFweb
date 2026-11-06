@@ -1,0 +1,190 @@
+{
+  "servers": [
+    {
+      "name": "aServer-X5-2205",
+      "socket": 2,
+      "core": 16,
+      "freq": 2.8,
+      "baseRam": 128,
+      "maxDisk": 12,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 2,
+      "memoryStripCounts": [4, 8, 12, 16, 24, 32],
+      "memoryEffectiveDate": "2026-09-24"
+    },
+    {
+      "name": "aServer-X5-2305P",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.1,
+      "baseRam": 128,
+      "maxDisk": 12,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 2,
+      "memoryStripCounts": [4, 8, 12, 16, 24, 32],
+      "memoryEffectiveDate": "2026-08-25"
+    },
+    {
+      "name": "VDS-X5-2205",
+      "socket": 2,
+      "core": 16,
+      "freq": 2.8,
+      "baseRam": 256,
+      "maxDisk": 12,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4,
+      "memoryStripCounts": [4, 8, 12, 16, 24, 32],
+      "memoryEffectiveDate": "2026-09-24"
+    },
+    {
+      "name": "VDS-X5-2405",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.8,
+      "baseRam": 256,
+      "maxDisk": 12,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4,
+      "memoryStripCounts": [4, 8, 12, 16, 24, 32],
+      "memoryEffectiveDate": "2026-09-24"
+    },
+    {
+      "name": "VDS-X5-G2600",
+      "socket": 2,
+      "core": 16,
+      "freq": 3.6,
+      "baseRam": 256,
+      "maxDisk": 10,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4,
+      "memoryStripCounts": [4, 8, 12, 16, 24, 32],
+      "memoryEffectiveDate": "2026-09-24"
+    },
+    {
+      "name": "aServer-X5-2405",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.8,
+      "baseRam": 128,
+      "maxDisk": 12,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 2,
+      "memoryStripCounts": [4, 8, 12, 16, 24, 32],
+      "memoryEffectiveDate": "2026-08-25"
+    },
+    {
+      "name": "aServer-Z4-2405",
+      "socket": 2,
+      "core": 32,
+      "freq": 3.25,
+      "baseRam": 256,
+      "maxDisk": 12,
+      "maxDimm": 24,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4,
+      "memoryStripCounts": [8, 12, 16, 20, 24],
+      "memoryEffectiveDate": "2026-08-25"
+    },
+    {
+      "name": "aServer-Z4-2605",
+      "socket": 2,
+      "core": 64,
+      "freq": 3.1,
+      "baseRam": 256,
+      "maxDisk": 12,
+      "maxDimm": 24,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4,
+      "memoryStripCounts": [8, 12, 16, 20, 24],
+      "memoryEffectiveDate": "2026-08-25"
+    },
+    {
+      "name": "R770(6507P)",
+      "socket": 2,
+      "core": 8,
+      "freq": 3.5,
+      "baseRam": 256,
+      "maxDisk": 24,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4
+    },
+    {
+      "name": "R770(6520P)",
+      "socket": 2,
+      "core": 24,
+      "freq": 2.4,
+      "baseRam": 256,
+      "maxDisk": 24,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4
+    },
+    {
+      "name": "R770(6530P)",
+      "socket": 2,
+      "core": 32,
+      "freq": 2.3,
+      "baseRam": 256,
+      "maxDisk": 24,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4
+    },
+    {
+      "name": "R770(6740P)",
+      "socket": 2,
+      "core": 48,
+      "freq": 2.1,
+      "baseRam": 256,
+      "maxDisk": 24,
+      "maxDimm": 32,
+      "baseDimmSizeGB": 64,
+      "baseDimmCount": 4
+    }
+  ],
+  "ssds": [
+    480,
+    960,
+    1600,
+    1900,
+    3200,
+    3800,
+    7600
+  ],
+  "hdds": [
+    960,
+    1600,
+    1900,
+    3200,
+    3800,
+    4000,
+    6000,
+    7600,
+    8000,
+    10000,
+    12000,
+    14000,
+    16000
+  ],
+  "memory": {
+    "dimmSizesGB": [
+      16,
+      64,
+      128
+    ],
+    "defaultDimmSizeGB": 64
+  },
+  "availability": {
+    "servers": {},
+    "memory": {},
+    "ssds": {},
+    "hdds": {}
+  }
+}

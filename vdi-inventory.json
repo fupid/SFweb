@@ -1,0 +1,13 @@
+{
+  "vdi_servers": [
+    { "model": "VDI-R650", "cpu_cores": 64, "ram_gb": 512, "slots": 12, "gpu_capable": true },
+    { "model": "VDI-R750", "cpu_cores": 80, "ram_gb": 1024, "slots": 24, "gpu_capable": true },
+    { "model": "VDI-Lite", "cpu_cores": 32, "ram_gb": 256, "slots": 8, "gpu_capable": false }
+  ],
+  "user_profiles": [
+    { "type": "task", "name": "Task Worker", "vcpu": 1, "ram": 2, "ratio": 10, "iops": 15 },
+    { "type": "office", "name": "Office Worker", "vcpu": 2, "ram": 4, "ratio": 6, "iops": 30 },
+    { "type": "power", "name": "Power User", "vcpu": 4, "ram": 16, "ratio": 3, "iops": 80 },
+    { "type": "designer", "name": "3D Designer", "vcpu": 8, "ram": 32, "ratio": 1.5, "iops": 150, "vram": 4 }
+  ]
+}

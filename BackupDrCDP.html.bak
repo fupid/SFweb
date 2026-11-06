@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANGFOR Backup & DR Storage Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header-section {
+            background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
+            padding: 32px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header-section h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header-section p {
+            font-size: 1.1rem;
+            margin-top: 8px;
+            opacity: 0.95;
+        }
+        .action-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .action-button:hover:not(:disabled) {
+            background-color: white;
+            color: #1a73e8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .action-button.success {
+            background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);
+            border: none;
+            color: white;
+        }
+        .action-button.success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2e8b4e 0%, #0d8548 100%);
+            color: white;
+            transform: scale(1.02);
+        }
+        .content-area {
+            padding: 40px;
+            background-color: #fafbfc;
+        }
+        .instructions {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #1a73e8;
+        }
+        .instructions strong {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .instructions ul {
+            margin: 10px 0 0 20px;
+            line-height: 1.8;
+        }
+        .section-panel {
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .section-panel:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        .section-header {
+            background: linear-gradient(135deg, #424242 0%, #616161 100%);
+            color: white;
+            padding: 24px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+        .section-header::before {
+            content: '📊';
+            margin-right: 12px;
+            font-size: 1.6rem;
+        }
+        .section-content {
+            padding: 30px;
+            background-color: #ffffff;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 2.5fr 1.2fr 1fr 2.5fr;
+            gap: 18px 24px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .form-row {
+            display: contents;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #212121;
+            font-size: 0.98rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #424242;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            font-weight: 400;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #424242 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .info-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background-color: #1a73e8;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .input-field {
+            padding: 12px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: #ffffff;
+            font-weight: 500;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.15);
+            background-color: #f0f8ff;
+        }
+        .input-field:hover:not(:focus) {
+            border-color: #9ca3af;
+        }
+        .input-field.error {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .unit-label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+        .description {
+            font-size: 0.85rem;
+            color: #6b7280;
+            font-style: italic;
+            line-height: 1.4;
+        }
+        .result-row {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 18px;
+            border-radius: 12px;
+            margin: 12px 0;
+            font-weight: 600;
+            border: 2px solid #81c784;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .result-value {
+            color: #d32f2f;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .summary-panel {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            padding: 32px;
+            border-radius: 16px;
+            margin-top: 40px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border: 3px solid #ffb74d;
+        }
+        .summary-panel h3 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #e65100;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .summary-panel h3::before {
+            content: '📈';
+            font-size: 2rem;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .summary-item {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #ff9800;
+            transition: all 0.3s ease;
+        }
+        .summary-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .summary-item strong {
+            color: #e65100;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .summary-item span {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        .notes-panel {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .notes-panel h4 {
+            color: #b45309;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .notes-panel h4::before {
+            content: '⚠️';
+            font-size: 1.3rem;
+        }
+        .notes-panel p {
+            color: #92400e;
+            line-height: 1.7;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .calculation-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-weight: 600;
+        }
+        .calculation-status.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .header-section .action-button,
+            .action-button.success {
+                display: none;
+            }
+            .section-panel {
+                page-break-inside: avoid;
+            }
+        }
+        @media (max-width: 1024px) {
+            .form-grid {
+                grid-template-columns: 1.5fr 1fr;
+                gap: 12px;
+            }
+            .form-label,
+            .unit-label,
+            .description {
+                grid-column: 1 / -1;
+            }
+            .input-field {
+                grid-column: 1;
+            }
+        }
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+            }
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 24px;
+            }
+            .header-section h1 {
+                font-size: 1.6rem;
+                margin-bottom: 8px;
+            }
+            .header-section p {
+                font-size: 0.95rem;
+                margin-bottom: 16px;
+            }
+            .action-button {
+                width: 100%;
+                margin-top: 12px;
+            }
+            .content-area {
+                padding: 20px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="calculation-status" class="calculation-status">✓ Calculations Updated</div>
+    <div class="container">
+        <div class="header-section">
+            <div>
+                <h1>SANGFOR Backup & DR Storage Calculator</h1>
+                <p>Professional backup and disaster recovery storage planning tool</p>
+            </div>
+            <button class="action-button" onclick="window.history.back()" aria-label="Go back to previous page">
+                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
+                Back
+            </button>
+        </div>
+        <div class="content-area">
+            <div class="instructions">
+                <strong>📋 Instructions:</strong>
+                <ul>
+                    <li>Fill in the <strong>blue input fields</strong> with your requirements</li>
+                    <li><strong style="color: #d32f2f; display: inline;">Red colored results</strong> are automatically calculated</li>
+                    <li>Hover over <span class="info-icon">i</span> icons for detailed explanations</li>
+                    <li>All calculations follow SANGFOR best practices and industry standards</li>
+                    <li>Values update automatically as you type</li>
+                </ul>
+            </div>
+
+            <!-- HCI Backup Storage Section -->
+            <div class="section-panel">
+                <div class="section-header">SANGFOR HCI Backup Storage</div>
+                <div class="section-content">
+                    <div class="form-grid">
+                        <div class="form-label">
+                            VM Number
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Total number of virtual machines requiring backup protection</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="vm-number" class="input-field" value="1" min="1" step="1" aria-label="Number of VMs"></div>
+                        <div class="unit-label">VM</div>
+                        <div class="description">Enter the total number of VMs</div>
+
+                        <div class="form-label">
+                            Enable Regular Full Volume
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Enable if you need regular full backups. Normally disabled for incremental-only backups.</span>
+                            </div>
+                        </div>
+                        <div><select id="enable-full" class="input-field" aria-label="Enable full volume backup">
+                            <option value="0">No (0)</option>
+                            <option value="1">Yes (1)</option>
+                        </select></div>
+                        <div class="unit-label"></div>
+                        <div class="description">Under normal circumstances, not selected. "0" means off, "1" means on.</div>
+
+                        <div class="form-label">
+                            Backup Retention Period
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">How long backup data should be retained before deletion</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="retention-period" class="input-field" value="6" min="1" step="1" aria-label="Retention period in days"></div>
+                        <div class="unit-label">Days</div>
+                        <div class="description">Recommended: 7-30 days</div>
+
+                        <div class="form-label">
+                            Original Full Data Size
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">The total size of one complete VM backup</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="full-data-size" class="input-field" value="1000" min="1" step="10" aria-label="Full data size per VM"></div>
+                        <div class="unit-label">GB/VM</div>
+                        <div class="description">Size of each full VM backup</div>
+
+                        <div class="form-label">
+                            Incremental Data Size in One Period
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Amount of data that changes during each backup period</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="incremental-size" class="input-field" value="1" min="0" step="0.1" aria-label="Incremental data size"></div>
+                        <div class="unit-label">GB/Period/VM</div>
+                        <div class="description">Typical: 0.5-5 GB per period</div>
+
+                        <div class="form-label">
+                            Full Backup Interval
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">How often a full backup is performed (only when regular full is enabled)</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="full-interval" class="input-field" value="1" min="1" step="1" aria-label="Full backup interval"></div>
+                        <div class="unit-label">Days</div>
+                        <div class="description">At least once a month, generally not selected, only when regular full enabled.</div>
+
+                        <div class="form-label">
+                            Incremental Backup Period
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Frequency of incremental backups</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="incremental-period" class="input-field" value="24" min="1" step="1" aria-label="Incremental backup period"></div>
+                        <div class="unit-label">Hours</div>
+                        <div class="description">Typical: 12-24 hours</div>
+
+                        <div class="form-label">
+                            Redundancy Coefficient
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Additional storage overhead for metadata, snapshots, and system overhead</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="redundancy" class="input-field" value="0.2" min="0" max="1" step="0.05" aria-label="Redundancy coefficient"></div>
+                        <div class="unit-label"></div>
+                        <div class="description">Recommend 20% (0.2)</div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Full Copy</div>
+                            <div class="result-value" id="full-copy-result">2</div>
+                            <div class="unit-label">Copy</div>
+                            <div class="description">Calculated automatically based on retention and interval</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Incremental Backup Copy</div>
+                            <div class="result-value" id="incremental-copy-result">7</div>
+                            <div class="unit-label">Copy</div>
+                            <div class="description">Maximum 256, (Retention Period × 24 / Incremental Period + 1)</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Full Data Size</div>
+                            <div class="result-value" id="full-size-result">1000</div>
+                            <div class="unit-label">GB/VM</div>
+                            <div class="description">Calculated based on full volume setting</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Incremental Data Size</div>
+                            <div class="result-value" id="incremental-data-result">7</div>
+                            <div class="unit-label">GB/VM</div>
+                            <div class="description">Incremental Size × Incremental Copy</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Backup Storage Size of Single VM</div>
+                            <div class="result-value" id="single-vm-result">1007</div>
+                            <div class="unit-label">GB/VM</div>
+                            <div class="description">Full Data Size + Incremental Data Size</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Total Backup Storage</div>
+                            <div class="result-value" id="total-backup-result">2</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">VM Number × Single VM Size / (1 - Redundancy)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HCI CDP Storage Section -->
+            <div class="section-panel">
+                <div class="section-header">SANGFOR HCI CDP Storage</div>
+                <div class="section-content">
+                    <div class="form-grid">
+                        <div class="form-label">
+                            VM Number
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Number of VMs requiring CDP (Continuous Data Protection)</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="cdp-vm-number" class="input-field" value="1" min="1" step="1" aria-label="CDP VM number"></div>
+                        <div class="unit-label">VM</div>
+                        <div class="description">VMs with CDP protection</div>
+
+                        <div class="form-label">
+                            Backup Retention Period
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">CDP retention period - typically shorter than standard backup</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="cdp-retention" class="input-field" value="10" min="1" step="1" aria-label="CDP retention period"></div>
+                        <div class="unit-label">Days</div>
+                        <div class="description">Typical: 7-14 days</div>
+
+                        <div class="form-label">
+                            Original Full Data Size
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Total size of VM data protected by CDP</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="cdp-full-size" class="input-field" value="100" min="1" step="10" aria-label="CDP full data size"></div>
+                        <div class="unit-label">GB/VM</div>
+                        <div class="description">Protected data size per VM</div>
+
+                        <div class="form-label">
+                            Incremental Data Size in One Period
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Change rate per hour for CDP</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="cdp-incremental" class="input-field" value="0.03" min="0" step="0.01" aria-label="CDP incremental size"></div>
+                        <div class="unit-label">GB/Period</div>
+                        <div class="description">Typical: 0.01-0.1 GB/hour</div>
+
+                        <div class="form-label">
+                            Incremental Backup Period
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">CDP snapshot interval - fixed at 1 hour</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="cdp-period" class="input-field" value="1" min="1" step="1" aria-label="CDP backup period" readonly></div>
+                        <div class="unit-label">Hour</div>
+                        <div class="description">Fixed to 1 hour</div>
+
+                        <div class="form-label">
+                            IO Average Speed of Single VM
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Average write I/O speed for calculating IO log storage</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="io-speed" class="input-field" value="500" min="1" step="50" aria-label="IO speed"></div>
+                        <div class="unit-label">KB/s/VM</div>
+                        <div class="description">Typical: 200-1000 KB/s</div>
+
+                        <div class="form-label">
+                            IO Log Retention
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">How long IO logs are kept for point-in-time recovery</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="io-retention" class="input-field" value="259200" min="1" step="3600" aria-label="IO log retention"></div>
+                        <div class="unit-label">Seconds</div>
+                        <div class="description">Default 3 days (259200 sec)</div>
+
+                        <div class="form-label">
+                            Redundancy Coefficient
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Storage overhead for CDP metadata and system files</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="cdp-redundancy" class="input-field" value="0.2" min="0" max="1" step="0.05" aria-label="CDP redundancy"></div>
+                        <div class="unit-label"></div>
+                        <div class="description">Recommend 20% (0.2)</div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Incremental Backup Copy</div>
+                            <div class="result-value" id="cdp-copy-result">241</div>
+                            <div class="unit-label">Copy</div>
+                            <div class="description">Maximum 256, (Retention Period × 24 / Period + 1)</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Incremental Data Size</div>
+                            <div class="result-value" id="cdp-data-result">7.23</div>
+                            <div class="unit-label">GB/VM</div>
+                            <div class="description">Incremental Size × Incremental Copy</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Backup Storage Size of Single VM</div>
+                            <div class="result-value" id="cdp-single-result">107.23</div>
+                            <div class="unit-label">GB/VM</div>
+                            <div class="description">Full Data Size + Incremental Data Size</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">IO Log Capacity of Single VM</div>
+                            <div class="result-value" id="io-log-result">124</div>
+                            <div class="unit-label">GB</div>
+                            <div class="description">IO Speed × IO Retention / 1024²</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Total CDP Backup Storage</div>
+                            <div class="result-value" id="cdp-total-result">1</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">VM Number × (Single VM + IO Log) / (1 - Redundancy)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HCI aDR Storage Section -->
+            <div class="section-panel">
+                <div class="section-header">SANGFOR HCI aDR Storage</div>
+                <div class="section-content">
+                    <div class="form-grid">
+                        <div class="form-label">
+                            Total Backup Storage (from above)
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Automatically filled from HCI Backup Storage calculation above</span>
+                            </div>
+                        </div>
+                        <div class="result-value" id="adr-backup-storage">2</div>
+                        <div class="unit-label">TB</div>
+                        <div class="description">RPO > 1 hour</div>
+
+                        <div class="form-label">
+                            Business Running Storage
+                            <div class="tooltip">
+                                <span class="info-icon">i</span>
+                                <span class="tooltiptext">Storage required for running production VMs at DR site</span>
+                            </div>
+                        </div>
+                        <div><input type="number" id="business-storage" class="input-field" value="1" min="0" step="0.1" aria-label="Business running storage"></div>
+                        <div class="unit-label">TB</div>
+                        <div class="description">For RPO > 1 hour scenario</div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Storage 1 (RPO > 1 hour)</div>
+                            <div class="result-value" id="storage1-result">3</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">Backup Storage + Business Storage</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">CDP Storage (from above)</div>
+                            <div class="result-value" id="adr-cdp-storage">1</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">For RPO < 1 hour</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Business Running Storage (CDP)</div>
+                            <div class="result-value" id="business-cdp-result">1</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">VM Number × Full Data Size / 1024</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Storage 2 (RPO < 1 hour)</div>
+                            <div class="result-value" id="storage2-result">2</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">CDP Storage + Business Running Storage</div>
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <div class="form-grid">
+                            <div class="form-label">Total aDR Storage</div>
+                            <div class="result-value" id="total-adr-result">5</div>
+                            <div class="unit-label">TB</div>
+                            <div class="description">Storage 1 + Storage 2</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="recalculateAll()" class="action-button success w-full" style="width: 100%; font-size: 1.1rem; padding: 16px;">
+                🔄 Recalculate All Values
+            </button>
+
+            <div class="summary-panel">
+                <h3>Storage Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <strong>HCI Backup Storage:</strong><br>
+                        <span id="summary-backup">2 TB</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>HCI CDP Storage:</strong><br>
+                        <span id="summary-cdp">1 TB</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Total aDR Storage:</strong><br>
+                        <span id="summary-adr">5 TB</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="notes-panel">
+                <h4>Important Notes:</h4>
+                <p><strong>1.</strong> Backup capacity can also be estimated based on experience - backup storage space is typically 2-3 times the source data.</p>
+                <p><strong>2.</strong> When using EDS or hyperconverged infrastructure for backup storage, consider multi-replica capacity. The planned capacity above is effective capacity.</p>
+                <p><strong>3.</strong> For aDR disaster recovery, consider both production center backup storage and disaster recovery center storage capacity.</p>
+                <p><strong>4.</strong> All calculations include a redundancy coefficient to account for metadata, snapshots, and system overhead.</p>
+                <p><strong>5.</strong> CDP (Continuous Data Protection) provides RPO < 1 hour, while standard backup provides RPO > 1 hour.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show calculation status notification
+        function showCalculationStatus() {
+            const status = document.getElementById('calculation-status');
+            status.classList.add('show');
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, 2000);
+        }
+
+        // Input validation
+        function validateInput(input) {
+            const value = parseFloat(input.value);
+            const min = parseFloat(input.min);
+            const max = parseFloat(input.max);
+            
+            if (isNaN(value) || (min !== null && value < min) || (max !== null && value > max)) {
+                input.classList.add('error');
+                return false;
+            } else {
+                input.classList.remove('error');
+                return true;
+            }
+        }
+
+        // Recalculate function with enhanced UX
+        function recalculateAll() {
+            const button = document.querySelector('.action-button.success');
+            const originalText = button.innerHTML;
+            button.innerHTML = '⏳ Calculating...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                calculateBackupStorage();
+                calculateCDPStorage();
+                calculateADRStorage();
+                updateSummary();
+
+                button.innerHTML = '✅ Recalculated!';
+                showCalculationStatus();
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 1000);
+            }, 500);
+        }
+
+        // FIXED: Backup Storage Calculation
+        function calculateBackupStorage() {
+            const vmNumber = parseFloat(document.getElementById('vm-number').value) || 1;
+            const enableFull = parseInt(document.getElementById('enable-full').value) || 0;
+            const retentionPeriod = parseFloat(document.getElementById('retention-period').value) || 6;
+            const fullDataSize = parseFloat(document.getElementById('full-data-size').value) || 1000;
+            const incrementalSize = parseFloat(document.getElementById('incremental-size').value) || 1;
+            const fullInterval = parseFloat(document.getElementById('full-interval').value) || 1;
+            const incrementalPeriod = parseFloat(document.getElementById('incremental-period').value) || 24;
+            const redundancy = parseFloat(document.getElementById('redundancy').value) || 0.2;
+
+            // FIXED: Calculate full copy - removed incorrect division by 30
+            const fullCopy = Math.ceil(retentionPeriod / fullInterval + 1);
+
+            // FIXED: Calculate incremental backup copy (max 256)
+            const incrementalCopy = Math.min(256, Math.ceil(retentionPeriod * 24 / incrementalPeriod + 1));
+
+            // FIXED: Calculate full data size based on enableFull setting (corrected logic)
+            // When enableFull is ON (1), multiply by full copies; when OFF (0), use base size
+            const calculatedFullSize = enableFull === 1 
+                ? fullCopy * fullDataSize 
+                : fullDataSize;
+
+            // Calculate incremental data size
+            const incrementalDataSize = incrementalSize * incrementalCopy;
+
+            // Calculate single VM backup size
+            const singleVMSize = calculatedFullSize + incrementalDataSize;
+
+            // FIXED: Calculate total backup storage - improved precision
+            const totalBackupGB = vmNumber * singleVMSize / (1 - redundancy);
+            const totalBackupTB = Math.ceil(totalBackupGB / 1024);
+
+            // Update results
+            document.getElementById('full-copy-result').textContent = fullCopy;
+            document.getElementById('incremental-copy-result').textContent = incrementalCopy;
+            document.getElementById('full-size-result').textContent = calculatedFullSize.toFixed(1);
+            document.getElementById('incremental-data-result').textContent = incrementalDataSize.toFixed(1);
+            document.getElementById('single-vm-result').textContent = singleVMSize.toFixed(1);
+            document.getElementById('total-backup-result').textContent = totalBackupTB;
+            
+            return totalBackupTB;
+        }
+
+        // FIXED: CDP Storage Calculation
+        function calculateCDPStorage() {
+            const vmNumber = parseFloat(document.getElementById('cdp-vm-number').value) || 1;
+            const retentionPeriod = parseFloat(document.getElementById('cdp-retention').value) || 10;
+            const fullDataSize = parseFloat(document.getElementById('cdp-full-size').value) || 100;
+            const incrementalSize = parseFloat(document.getElementById('cdp-incremental').value) || 0.03;
+            const incrementalPeriod = parseFloat(document.getElementById('cdp-period').value) || 1;
+            const ioSpeed = parseFloat(document.getElementById('io-speed').value) || 500;
+            const ioRetention = parseFloat(document.getElementById('io-retention').value) || 259200;
+            const redundancy = parseFloat(document.getElementById('cdp-redundancy').value) || 0.2;
+
+            // Calculate incremental backup copy (max 256)
+            const incrementalCopy = Math.min(256, Math.ceil(retentionPeriod * 24 / incrementalPeriod + 1));
+
+            // Calculate incremental data size
+            const incrementalDataSize = incrementalSize * incrementalCopy;
+
+            // Calculate single VM backup size
+            const singleVMSize = fullDataSize + incrementalDataSize;
+
+            // Calculate IO log capacity (KB/s * seconds / 1024^2 to get GB)
+            const ioLogCapacity = ioSpeed * ioRetention / (1024 * 1024);
+
+            // FIXED: Calculate total CDP storage with improved precision
+            const totalCDPGB = vmNumber * (singleVMSize + ioLogCapacity) / (1 - redundancy);
+            const totalCDPTB = Math.ceil(totalCDPGB / 1024);
+
+            // Update results
+            document.getElementById('cdp-copy-result').textContent = incrementalCopy;
+            document.getElementById('cdp-data-result').textContent = incrementalDataSize.toFixed(2);
+            document.getElementById('cdp-single-result').textContent = singleVMSize.toFixed(2);
+            document.getElementById('io-log-result').textContent = ioLogCapacity.toFixed(1);
+            document.getElementById('cdp-total-result').textContent = totalCDPTB;
+            
+            return totalCDPTB;
+        }
+
+        // FIXED: aDR Storage Calculation
+        function calculateADRStorage() {
+            const businessStorage = parseFloat(document.getElementById('business-storage').value) || 1;
+            const cdpVMNumber = parseFloat(document.getElementById('cdp-vm-number').value) || 1;
+            const cdpFullSize = parseFloat(document.getElementById('cdp-full-size').value) || 100;
+
+            // Get calculated values from other sections
+            const totalBackupTB = calculateBackupStorage();
+            const totalCDPTB = calculateCDPStorage();
+
+            // Calculate storage components
+            const storage1 = totalBackupTB + businessStorage;
+            
+            // FIXED: Business CDP Storage calculation - improved precision
+            const businessCDPGB = cdpVMNumber * cdpFullSize;
+            const businessCDPStorage = Math.ceil(businessCDPGB / 1024);
+            
+            const storage2 = totalCDPTB + businessCDPStorage;
+            const totalADR = storage1 + storage2;
+
+            // Update results
+            document.getElementById('adr-backup-storage').textContent = totalBackupTB;
+            document.getElementById('storage1-result').textContent = storage1;
+            document.getElementById('adr-cdp-storage').textContent = totalCDPTB;
+            document.getElementById('business-cdp-result').textContent = businessCDPStorage;
+            document.getElementById('storage2-result').textContent = storage2;
+            document.getElementById('total-adr-result').textContent = totalADR;
+            
+            return { backup: totalBackupTB, cdp: totalCDPTB, adr: totalADR };
+        }
+
+        // Update summary section
+        function updateSummary() {
+            const results = calculateADRStorage();
+            document.getElementById('summary-backup').textContent = results.backup + ' TB';
+            document.getElementById('summary-cdp').textContent = results.cdp + ' TB';
+            document.getElementById('summary-adr').textContent = results.adr + ' TB';
+            showCalculationStatus();
+        }
+
+        // Add event listeners for automatic calculation
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                // Add input validation
+                input.addEventListener('input', function() {
+                    validateInput(this);
+                    setTimeout(updateSummary, 100);
+                });
+                
+                // Add blur validation
+                input.addEventListener('blur', function() {
+                    validateInput(this);
+                });
+            });
+
+            // Initial calculation
+            updateSummary();
+            
+            // Add keyboard shortcut (Ctrl+R or Cmd+R to recalculate)
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                    e.preventDefault();
+                    recalculateAll();
+                }
+            });
+        });
+
+        // Print functionality
+        window.addEventListener('beforeprint', function() {
+            updateSummary();
+        });
+    </script>
+</body>
+</html>

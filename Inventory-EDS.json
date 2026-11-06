@@ -1,0 +1,25 @@
+{
+  "eds_servers": [
+    { "model": "EDS-1150W", "slots": 11, "u2_max": 4, "ram_base": 64, "type": "Hybrid" },
+    { "model": "EDS-1210W", "slots": 12, "u2_max": 2, "ram_base": 128, "type": "Hybrid" },
+    { "model": "EDS-1250W", "slots": 14, "u2_max": 2, "ram_base": 128, "type": "Hybrid" },
+    { "model": "EDS-3650W", "slots": 40, "u2_max": 4, "ram_base": 256, "type": "Hybrid" },
+    { "model": "EDS-G5300", "slots": 12, "u2_max": 12, "ram_base": 256, "type": "All-Flash" }
+  ],
+  "disk_options": {
+    "hdd": [4, 6, 8, 10, 12, 14, 16],
+    "sata_ssd": [0.48, 0.96, 1.92, 3.84],
+    "nvme_ssd": [0.96, 1.6, 1.92, 3.2, 3.84, 7.68],
+    "rams": [64, 128, 256, 512]
+  },
+  "policies": {
+    "file_object": [
+      { "name": "EC 4+2", "efficiency": 0.66, "min_node": 3 },
+      { "name": "EC 8+2", "efficiency": 0.80, "min_node": 5 }
+    ],
+    "block": [
+      { "name": "2-Copy", "efficiency": 0.50, "min_node": 2 },
+      { "name": "3-Copy", "efficiency": 0.33, "min_node": 3 }
+    ]
+  }
+}
